@@ -32,7 +32,7 @@ INDEX_URL = BASE_URL + "/monetarypolicy/beigebook{year}.htm"
 SCRAPE_DELAY = 5  # seconds between requests
 REQUEST_HEADERS = {"User-Agent": "BeigeBookResearch/1.0"}
 START_YEAR = 2011
-END_YEAR = 2025
+END_YEAR = 2026
 
 # The 12 Federal Reserve district banks (canonical short names)
 DISTRICTS = [
@@ -84,6 +84,32 @@ REGIONAL_FRED_SERIES = {
     "Dallas": "TXPHCI",
     "San Francisco": "CAPHCI",
 }
+
+# Federal Reserve district -> state FIPS code mapping
+# Maps each district to the states it covers (using 2-letter postal codes)
+# Based on the official Federal Reserve district boundaries
+DISTRICT_STATES = {
+    "Boston": ["CT", "ME", "MA", "NH", "RI", "VT"],
+    "New York": ["NY", "NJ"],
+    "Philadelphia": ["PA", "DE"],
+    "Cleveland": ["OH", "WV", "KY"],
+    "Richmond": ["VA", "MD", "DC", "NC", "SC"],
+    "Atlanta": ["GA", "FL", "AL", "TN", "LA", "MS"],
+    "Chicago": ["IL", "IN", "IA", "MI", "WI"],
+    "St. Louis": ["MO", "AR"],
+    "Minneapolis": ["MN", "MT", "ND", "SD", "WI"],
+    "Kansas City": ["KS", "NE", "OK", "CO", "WY", "NM"],
+    "Dallas": ["TX"],
+    "San Francisco": ["CA", "OR", "WA", "NV", "UT", "AZ", "ID", "HI", "AK"],
+}
+
+# Reverse mapping: state -> district (for states split between districts,
+# the first listed district takes priority)
+STATE_TO_DISTRICT = {}
+for _district, _states in DISTRICT_STATES.items():
+    for _state in _states:
+        if _state not in STATE_TO_DISTRICT:
+            STATE_TO_DISTRICT[_state] = _district
 
 # Sentiment analysis
 CONFIDENCE_INTERVAL = 0.95

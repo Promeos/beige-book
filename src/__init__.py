@@ -19,12 +19,25 @@ from .explore import (
     plot_regional_sentiment_vs_economy,
     plot_regional_correlation_bars,
     plot_district_timeseries_grid,
+    plot_sector_heatmap,
+    plot_sector_timeseries,
+    plot_sector_district_grid,
+    plot_sector_volatility,
 )
 from .hypothesis import (
     evaluate_p_value,
     compute_lagged_correlations,
     run_granger_tests,
     compute_regional_correlations,
+    compute_sector_correlations,
+    compute_sector_district_correlations,
+)
+from .sectors import extract_sectors, score_sectors, build_sector_dataframe
+from .maps import (
+    plot_sector_map,
+    plot_sector_map_grid,
+    plot_dominant_sector_map,
+    plot_sector_map_animated,
 )
 
 __all__ = [
@@ -47,4 +60,17 @@ __all__ = [
     "compute_lagged_correlations",
     "run_granger_tests",
     "compute_regional_correlations",
+    "compute_sector_correlations",
+    "compute_sector_district_correlations",
+    "plot_sector_heatmap",
+    "plot_sector_timeseries",
+    "plot_sector_district_grid",
+    "plot_sector_volatility",
+    "extract_sectors",
+    "score_sectors",
+    "build_sector_dataframe",
+    "plot_sector_map",
+    "plot_sector_map_grid",
+    "plot_dominant_sector_map",
+    "plot_sector_map_animated",
 ]

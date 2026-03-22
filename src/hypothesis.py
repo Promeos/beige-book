@@ -191,3 +191,115 @@ def compute_regional_correlations(df, sentiment_col="vader_compound",
               f"p={row['p_value']:.4f}  n={row['n_obs']:.0f} {marker}")
 
     return results
+
+
+def compute_sector_correlations(sector_df, regional_df,
+                                sentiment_col="vader_compound",
+                                indicator_col="coincident_index"):
+    """
+    Compute correlation between each sector's sentiment and regional economic
+    activity, aggregated across all districts.
+
+    Parameters
+    ----------
+    sector_df : pandas.core.frame.DataFrame
+        Must have columns: date, district, sector, vader_compound.
+    regional_df : pandas.core.frame.DataFrame
+        Must have columns: date, district, coincident_index.
+    sentiment_col : str
+    indicator_col : str
+
+    Returns
+    -------
+    results : pandas.core.frame.DataFrame
+        One row per sector with columns: sector, correlation, p_value, n_obs.
+    """
+    sector_df = sector_df.copy()
+    sector_df["date"] = pd.to_datetime(sector_df["date"])
+    regional_df = regional_df.copy()
+    regional_df["date"] = pd.to_datetime(regional_df["date"])
+
+    merged = pd.merge_asof(
+        sector_df.sort_values("date"),
+        regional_df[["date", "district", indicator_col]].sort_values("date"),
+        on="date",
+        by="district",
+        direction="forward",
+    )
+
+    rows = []
+    for sector in sorted(merged["sector"].unique()):
+        subset = merged[merged["sector"] == sector][[sentiment_col, indicator_col]].dropna()
+        if len(subset) < 10:
+            continue
+
+        r, p = pearsonr(subset[sentiment_col], subset[indicator_col])
+        rows.append({
+            "sector": sector,
+            "correlation": r,
+            "p_value": p,
+            "n_obs": len(subset),
+        })
+
+    results = pd.DataFrame(rows).sort_values("correlation", ascending=False)
+
+    print("\nSector Correlations: Sentiment vs. Coincident Index")
+    print("-" * 60)
+    for _, row in results.iterrows():
+        marker = "***" if row["p_value"] < ALPHA else ""
+        print(f"  {row['sector']:25s}  r={row['correlation']:+.3f}  "
+              f"p={row['p_value']:.4f}  n={row['n_obs']:.0f} {marker}")
+
+    return results
+
+
+def compute_sector_district_correlations(sector_df, regional_df,
+                                         sentiment_col="vader_compound",
+                                         indicator_col="coincident_index"):
+    """
+    Compute correlation for each (sector, district) pair.
+
+    Parameters
+    ----------
+    sector_df : pandas.core.frame.DataFrame
+        Must have columns: date, district, sector, vader_compound.
+    regional_df : pandas.core.frame.DataFrame
+        Must have columns: date, district, coincident_index.
+    sentiment_col : str
+    indicator_col : str
+
+    Returns
+    -------
+    results : pandas.core.frame.DataFrame
+        One row per (sector, district) with columns: sector, district,
+        correlation, p_value, n_obs.
+    """
+    sector_df = sector_df.copy()
+    sector_df["date"] = pd.to_datetime(sector_df["date"])
+    regional_df = regional_df.copy()
+    regional_df["date"] = pd.to_datetime(regional_df["date"])
+
+    merged = pd.merge_asof(
+        sector_df.sort_values("date"),
+        regional_df[["date", "district", indicator_col]].sort_values("date"),
+        on="date",
+        by="district",
+        direction="forward",
+    )
+
+    rows = []
+    for (sector, district), group in merged.groupby(["sector", "district"]):
+        subset = group[[sentiment_col, indicator_col]].dropna()
+        if len(subset) < 10:
+            continue
+
+        r, p = pearsonr(subset[sentiment_col], subset[indicator_col])
+        rows.append({
+            "sector": sector,
+            "district": district,
+            "correlation": r,
+            "p_value": p,
+            "n_obs": len(subset),
+        })
+
+    return pd.DataFrame(rows)

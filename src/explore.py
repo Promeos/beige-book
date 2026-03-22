@@ -303,6 +303,182 @@ def plot_district_timeseries_grid(df, save=True):
     return fig
 
 
+def plot_sector_heatmap(df, save=True):
+    """
+    Heatmap of average sentiment by sector and district.
+
+    Parameters
+    ----------
+    df : pandas.core.frame.DataFrame
+        Sector-level DataFrame with columns: district, sector, vader_compound.
+    save : bool
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    """
+    pivot = df.pivot_table(
+        index="sector", columns="district", values="vader_compound", aggfunc="mean"
+    )
+    # Reorder districts to canonical order
+    ordered_districts = [d for d in DISTRICTS if d in pivot.columns]
+    pivot = pivot[ordered_districts]
+    # Sort sectors by overall mean
+    pivot = pivot.loc[pivot.mean(axis=1).sort_values(ascending=False).index]
+
+    fig, ax = plt.subplots(figsize=(16, 8))
+    sns.heatmap(
+        pivot,
+        cmap="RdYlGn",
+        center=0,
+        annot=True,
+        fmt=".2f",
+        ax=ax,
+        linewidths=0.5,
+        cbar_kws={"label": "Avg. Sentiment Score"},
+    )
+    ax.set_title("Average Sector Sentiment by Federal Reserve District (2011–2025)")
+    ax.set_xlabel("")
+    ax.set_ylabel("")
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+
+    if save:
+        _save_fig(fig, "sector_heatmap.png")
+    return fig
+
+
+def plot_sector_timeseries(df, sectors=None, save=True):
+    """
+    Time series of national-average sentiment for each sector.
+
+    Parameters
+    ----------
+    df : pandas.core.frame.DataFrame
+        Sector-level DataFrame with columns: date, sector, vader_compound.
+    sectors : list of str or None
+        Sectors to plot. If None, plots the top 6 by observation count.
+    save : bool
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    """
+    if sectors is None:
+        top = df["sector"].value_counts().head(6).index.tolist()
+        sectors = top
+
+    # Compute national average per sector per date
+    agg = (
+        df[df["sector"].isin(sectors)]
+        .groupby(["date", "sector"])["vader_compound"]
+        .mean()
+        .reset_index()
+    )
+
+    fig, ax = plt.subplots(figsize=FIGSIZE)
+    palette = sns.color_palette("husl", len(sectors))
+
+    for color, sector in zip(palette, sectors):
+        subset = agg[agg["sector"] == sector].sort_values("date")
+        ax.plot(subset["date"], subset["vader_compound"],
+                label=sector, color=color, linewidth=1.2, alpha=0.85)
+
+    ax.axhline(y=0, color="gray", linestyle="--", linewidth=0.8)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("VADER Compound Score")
+    ax.set_title("Beige Book Sector Sentiment Over Time (National Average)")
+    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=9)
+    ax.xaxis.set_major_locator(mdates.YearLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+
+    if save:
+        _save_fig(fig, "sector_timeseries.png")
+    return fig
+
+
+def plot_sector_district_grid(df, sector, save=True):
+    """
+    Small multiples grid showing one sector's sentiment across all 12 districts.
+
+    Parameters
+    ----------
+    df : pandas.core.frame.DataFrame
+        Sector-level DataFrame with columns: date, district, sector, vader_compound.
+    sector : str
+        Which sector to plot.
+    save : bool
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    """
+    sector_data = df[df["sector"] == sector]
+    districts = [d for d in DISTRICTS if d in sector_data["district"].unique()]
+    n = len(districts)
+    cols = 3
+    rows = (n + cols - 1) // cols
+
+    fig, axes = plt.subplots(rows, cols, figsize=(16, rows * 3), sharex=True, sharey=True)
+    axes = axes.flatten()
+
+    for i, district in enumerate(districts):
+        ax = axes[i]
+        subset = sector_data[sector_data["district"] == district].sort_values("date")
+        ax.plot(subset["date"], subset["vader_compound"], color="steelblue", linewidth=1)
+        ax.axhline(y=0, color="gray", linestyle="--", linewidth=0.5)
+        ax.set_title(district, fontsize=10, fontweight="bold")
+        ax.tick_params(axis="both", labelsize=7)
+        ax.tick_params(axis="x", rotation=45)
+
+    for j in range(i + 1, len(axes)):
+        axes[j].set_visible(False)
+
+    fig.suptitle(f"Beige Book {sector} Sentiment by District",
+                 fontsize=13, fontweight="bold", y=1.02)
+    plt.tight_layout()
+
+    if save:
+        safe_name = sector.lower().replace(" ", "_").replace("&", "and")
+        _save_fig(fig, f"sector_{safe_name}_grid.png")
+    return fig
+
+
+def plot_sector_volatility(df, save=True):
+    """
+    Bar chart of sentiment volatility (std dev) by sector.
+
+    Parameters
+    ----------
+    df : pandas.core.frame.DataFrame
+        Sector-level DataFrame with columns: sector, vader_compound.
+    save : bool
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    """
+    stats = (
+        df.groupby("sector")["vader_compound"]
+        .agg(["mean", "std", "count"])
+        .sort_values("std", ascending=True)
+    )
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    colors = plt.cm.RdYlGn((stats["mean"] - stats["mean"].min()) /
+                            (stats["mean"].max() - stats["mean"].min()))
+    ax.barh(stats.index, stats["std"], color=colors)
+    ax.set_xlabel("Sentiment Volatility (Std Dev)")
+    ax.set_title("Sector Sentiment Volatility (color = avg sentiment: red=low, green=high)")
+    plt.tight_layout()
+
+    if save:
+        _save_fig(fig, "sector_volatility.png")
+    return fig
+
+
 def _save_fig(fig, filename):
     """
     Save a matplotlib figure to the output directory.

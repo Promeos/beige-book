@@ -44,6 +44,22 @@ Not all districts are equal. We tested each district's sentiment against its sta
 | **San Francisco** | +0.27 | 0.003 |
 | **New York** | +0.21 | 0.022 |
 
+### Sector Analysis
+
+Each district summary is classified into 12 economic sectors (Manufacturing, Employment, Real Estate, etc.) using keyword-based sentence classification, then scored individually.
+
+![Sector Sentiment Heatmap](output/sector_heatmap.png)
+
+**Key findings:**
+
+- **Geographic pessimism gradient**: Northeast > Midwest > South > West Coast. San Francisco is the most pessimistic district across nearly every sector, with three sectors (Financial Services, Transportation, Construction) averaging negative sentiment.
+- **Energy is nationally synchronized** (r = 0.86 cross-district) -- when oil moves, every district talks about it the same way. Manufacturing is the most locally driven (r = 0.59), making it the best sector for detecting regional variation.
+- **Cleveland Employment** (r = 0.61) is the single most predictive sector-district pair, followed by Boston Manufacturing (r = 0.55) and San Francisco Employment (r = 0.55).
+- **Rate hikes (2022-23) crushed Transportation** (-0.37 sentiment drop, the "freight recession") and Real Estate (-0.19), while Agriculture *improved* (+0.26) from high commodity prices.
+- **COVID hit Employment universally** -- all 10 worst sector-district pairs were Employment -- but recovery was symmetric: the hardest-hit bounced back fastest.
+
+For the full regional deep dive (district-by-district profiles, sector specialization, divergence analysis), see **[ANALYSIS.md](ANALYSIS.md)**.
+
 ## Project Structure
 
 ```
@@ -55,7 +71,9 @@ beige_book/
 │   ├── sentiment.py   # VADER sentiment scoring
 │   ├── explore.py     # Visualization functions
 │   ├── hypothesis.py  # Statistical tests (correlation, Granger)
-│   └── model.py       # OLS regression, out-of-sample testing
+│   ├── model.py       # OLS regression, out-of-sample testing
+│   ├── sectors.py     # Sector extraction from district summaries
+│   └── maps.py        # Interactive choropleth maps (Plotly)
 ├── data/              # Scraped data + FRED CSVs (gitignored)
 │   └── raw_html/      # Cached HTML pages
 ├── output/            # Generated plots and results
@@ -114,6 +132,18 @@ python run_pipeline.py
 - `regional_correlation_bars.png` -- Per-district predictive power
 - `regional_sentiment_vs_economy.png` -- District sentiment vs. state economic activity scatter
 - `district_timeseries_grid.png` -- 12-panel grid: sentiment + economic activity per district
+- `sector_heatmap.png` -- Sector sentiment heatmap across districts
+- `sector_timeseries.png` -- Sector sentiment over time
+- `sector_manufacturing_grid.png` -- Manufacturing sentiment by district
+- `sector_volatility.png` -- Sector sentiment volatility comparison
+
+**Interactive maps** (HTML, open in browser for hover details):
+
+- `map_sector_grid.html` -- 6-sector choropleth grid
+- `map_dominant_strongest.html` -- Each district's strongest sector
+- `map_dominant_weakest.html` -- Each district's weakest sector
+- `map_manufacturing.html` / `map_employment.html` / `map_real_estate.html` / `map_energy.html` -- Individual sector choropleths
+- `map_*_animated.html` -- Animated sentiment over time for each sector (play button + date slider)
 
 **Console output** includes:
 
@@ -141,4 +171,4 @@ python run_pipeline.py
 - **Multi-state aggregation** — weight constituent states by GDP/employment for more accurate district-level indicators
 - Extend data back to **1996** for more economic cycles
 - Test **real-time forecasting** accuracy at the time of each publication
-- Investigate **sector-specific keywords** — do manufacturing mentions drive Cleveland's strong correlation?
+- Build a **dashboard** for browsing district and sector sentiment interactively

@@ -3,6 +3,9 @@
 ## Project Goal
 Test whether Federal Reserve Beige Book sentiment has **predictive power** for real economic indicators (GDP, unemployment, CPI, S&P 500). Scrape regional economic summaries from the 12 Fed district banks, score sentiment, and correlate with FRED data.
 
+# Custom Agents                                                                                                                 
+Before starting work, check `.claude/agents/` for available specialized agents and consider delegating tasks that match their descriptions. Invoke agents by name when the task fits. 
+
 ## Project Structure
 ```
 beige_book/
@@ -13,7 +16,9 @@ beige_book/
 │   ├── sentiment.py   # VADER sentiment scoring
 │   ├── explore.py     # Visualization functions
 │   ├── hypothesis.py  # Statistical tests (correlation, Granger)
-│   └── model.py       # OLS regression, out-of-sample testing
+│   ├── model.py       # OLS regression, out-of-sample testing
+│   ├── sectors.py     # Sector extraction from district summaries
+│   └── maps.py        # Interactive choropleth maps (Plotly)
 ├── data/              # Scraped data + FRED CSVs (gitignored)
 │   └── raw_html/      # Cached HTML pages
 ├── output/            # Generated plots and results

@@ -137,11 +137,17 @@ def _collect_report_urls(start_year, end_year):
     """
     urls = []
     for year in range(start_year, end_year + 1):
+        # Try the standard index URL
         index_url = INDEX_URL.format(year=year)
         html = _fetch_html(index_url)
+
         if html is None:
-            logger.warning("Could not fetch index for %d", year)
-            continue
+            # Try the new publications path (2026+)
+            alt_url = BASE_URL + f"/monetarypolicy/publications/beige-book-default.htm"
+            html = _fetch_html(alt_url)
+            if html is None:
+                logger.warning("Could not fetch index for %d", year)
+                continue
 
         sel = Selector(text=html, type="html")
         paths = sel.xpath('//a[contains(., "HTML")]/@href').getall()
@@ -149,12 +155,14 @@ def _collect_report_urls(start_year, end_year):
         if not paths:
             # Fallback: some years use different link text
             paths = sel.xpath('//a[contains(@href, "beigebook")]/@href').getall()
-            # Filter to individual reports (have YYYYMM pattern)
-            paths = [p for p in paths if re.search(r"beigebook\d{6}", p)]
 
-        for path in paths:
+        # Filter to individual reports for this year (have YYYY pattern)
+        year_paths = [p for p in paths if re.search(rf"beigebook{year}\d{{2}}", p)]
+
+        for path in year_paths:
             full_url = BASE_URL + path if path.startswith("/") else path
-            urls.append(full_url)
+            if full_url not in urls:
+                urls.append(full_url)
 
     return urls
 
@@ -467,6 +475,7 @@ def _parse_date_from_url(url):
     str
         Date string in YYYY-MM-DD format.
     """
+    # Handles both old (beigebook202001.htm) and new (beigebook202601-summary.htm) formats
     match = re.search(r"beigebook(\d{4})(\d{2})", url)
     if match:
         year, month = match.groups()
