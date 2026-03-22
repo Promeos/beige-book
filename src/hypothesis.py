@@ -148,3 +148,46 @@ def run_granger_tests(
             print(f"  Lag {lag}: F={f_stat:.3f}, p={p_value:.4f} {marker}")
 
     return results
+
+
+def compute_regional_correlations(df, sentiment_col="vader_compound",
+                                  indicator_col="coincident_index"):
+    """
+    Compute per-district correlation between sentiment and a regional indicator.
+
+    Parameters
+    ----------
+    df : pandas.core.frame.DataFrame
+        Must have columns: district, sentiment_col, indicator_col.
+    sentiment_col : str
+    indicator_col : str
+
+    Returns
+    -------
+    results : pandas.core.frame.DataFrame
+        One row per district with columns: district, correlation, p_value, n_obs.
+    """
+    rows = []
+    for district in sorted(df["district"].unique()):
+        subset = df[df["district"] == district][[sentiment_col, indicator_col]].dropna()
+        if len(subset) < 10:
+            continue
+
+        r, p = pearsonr(subset[sentiment_col], subset[indicator_col])
+        rows.append({
+            "district": district,
+            "correlation": r,
+            "p_value": p,
+            "n_obs": len(subset),
+        })
+
+    results = pd.DataFrame(rows)
+
+    print("\nRegional Correlations: Sentiment vs. Coincident Index")
+    print("-" * 60)
+    for _, row in results.iterrows():
+        marker = "***" if row["p_value"] < ALPHA else ""
+        print(f"  {row['district']:15s}  r={row['correlation']:+.3f}  "
+              f"p={row['p_value']:.4f}  n={row['n_obs']:.0f} {marker}")
+
+    return results

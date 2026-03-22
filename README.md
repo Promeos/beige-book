@@ -28,6 +28,22 @@ Statistical methods: lagged Pearson/Spearman correlations, Granger causality tes
 
 The strongest signal is **unemployment** (r = -0.59): when Beige Book narratives turn more positive, unemployment tends to fall in subsequent months. This makes intuitive sense — the district banks are directly surveying businesses about hiring conditions.
 
+### Regional Analysis
+
+Not all districts are equal. We tested each district's sentiment against its state's [Coincident Economic Activity Index](https://fred.stlouisfed.org/release?rid=109) (Philadelphia Fed):
+
+![Regional Predictive Power by Federal Reserve District](output/regional_correlation_bars.png)
+
+**Cleveland dominates** (r = 0.66) because the district covers Ohio's manufacturing heartland — auto plants (Honda, GM, Ford), steel, and chemicals. Manufacturing is highly cyclical, so when Cleveland's Beige Book turns positive or negative, Ohio's economy follows in lockstep. Diversified economies (Chicago, Dallas, Atlanta) show no significant correlation because competing signals dilute the sentiment.
+
+| District | Correlation | p-value |
+|----------|-----------|---------|
+| **Cleveland** | **+0.66** | < 0.0001 |
+| **Boston** | +0.35 | 0.0001 |
+| **St. Louis** | +0.27 | 0.003 |
+| **San Francisco** | +0.27 | 0.003 |
+| **New York** | +0.21 | 0.022 |
+
 ## Project Structure
 
 ```
@@ -95,6 +111,9 @@ python run_pipeline.py
 - `sentiment_vs_unrate.png` -- Dual-axis: sentiment vs. Unemployment
 - `sentiment_vs_cpiaucsl.png` -- Dual-axis: sentiment vs. CPI
 - `sentiment_vs_sp500.png` -- Dual-axis: sentiment vs. S&P 500
+- `regional_correlation_bars.png` -- Per-district predictive power
+- `regional_sentiment_vs_economy.png` -- District sentiment vs. state economic activity scatter
+- `district_timeseries_grid.png` -- 12-panel grid: sentiment + economic activity per district
 
 **Console output** includes:
 
@@ -119,6 +138,7 @@ python run_pipeline.py
 ## Future Work
 
 - Use **FinBERT** for domain-specific economic sentiment scoring
-- Add **regional-level** analysis (district sentiment vs. district-level unemployment)
+- **Multi-state aggregation** — weight constituent states by GDP/employment for more accurate district-level indicators
 - Extend data back to **1996** for more economic cycles
 - Test **real-time forecasting** accuracy at the time of each publication
+- Investigate **sector-specific keywords** — do manufacturing mentions drive Cleveland's strong correlation?

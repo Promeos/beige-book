@@ -67,6 +67,24 @@ DISTRICT_ALIASES = {
     "Federal Reserve Bank of San Francisco": "San Francisco",
 }
 
+# Regional FRED series — State Coincident Economic Activity Index
+# (Philadelphia Fed, monthly, index 2007=100)
+# Maps each district to its primary state's coincident index
+REGIONAL_FRED_SERIES = {
+    "Boston": "MAPHCI",
+    "New York": "NYPHCI",
+    "Philadelphia": "PAPHCI",
+    "Cleveland": "OHPHCI",
+    "Richmond": "VAPHCI",
+    "Atlanta": "GAPHCI",
+    "Chicago": "ILPHCI",
+    "St. Louis": "MOPHCI",
+    "Minneapolis": "MNPHCI",
+    "Kansas City": "KSPHCI",
+    "Dallas": "TXPHCI",
+    "San Francisco": "CAPHCI",
+}
+
 # Sentiment analysis
 CONFIDENCE_INTERVAL = 0.95
 ALPHA = 0.05

@@ -27,6 +27,7 @@ from src.config import (
     RAW_HTML_DIR,
     FRED_API_KEY,
     FRED_SERIES,
+    REGIONAL_FRED_SERIES,
 )
 
 logger = logging.getLogger(__name__)
@@ -583,4 +584,75 @@ def fetch_fred_data(start_date="2000-01-01", end_date=None):
         df["SP500"] = sp500_monthly
 
     df = df.reset_index()
+    return df
+
+
+# ---------------------------------------------------------------------------
+# Regional FRED data (State Coincident Economic Activity Index)
+# ---------------------------------------------------------------------------
+
+
+def get_regional_fred_data(use_cache=True):
+    """
+    Load regional FRED indicators (state coincident indices) from cache or fetch.
+
+    Parameters
+    ----------
+    use_cache : bool
+
+    Returns
+    -------
+    df : pandas.core.frame.DataFrame
+        Long-format DataFrame with columns: date, district, coincident_index.
+    """
+    csv_path = DATA_DIR / "fred_regional.csv"
+    if use_cache and csv_path.exists():
+        logger.info("Loading cached regional FRED data from %s", csv_path)
+        return pd.read_csv(csv_path, parse_dates=["date"])
+
+    df = fetch_regional_fred_data()
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    df.to_csv(csv_path, index=False)
+    logger.info("Saved regional FRED data to %s (%d rows)", csv_path, len(df))
+    return df
+
+
+def fetch_regional_fred_data(start_date="2000-01-01", end_date=None):
+    """
+    Fetch State Coincident Economic Activity Index for each Fed district.
+
+    Parameters
+    ----------
+    start_date : str
+    end_date : str
+
+    Returns
+    -------
+    df : pandas.core.frame.DataFrame
+        Long-format with columns: date, district, coincident_index.
+    """
+    from fredapi import Fred
+
+    if not FRED_API_KEY:
+        raise ValueError("FRED_API_KEY not found. Add it to your .env file.")
+
+    fred = Fred(api_key=FRED_API_KEY)
+    end_date = end_date or datetime.now().strftime("%Y-%m-%d")
+
+    rows = []
+    for district, series_id in REGIONAL_FRED_SERIES.items():
+        logger.info("Fetching %s for %s", series_id, district)
+        try:
+            data = fred.get_series(series_id, start_date, end_date)
+            for date, value in data.items():
+                rows.append({
+                    "date": date,
+                    "district": district,
+                    "coincident_index": value,
+                })
+        except Exception as e:
+            logger.error("Failed to fetch %s (%s): %s", series_id, district, e)
+
+    df = pd.DataFrame(rows)
+    df["date"] = pd.to_datetime(df["date"])
     return df

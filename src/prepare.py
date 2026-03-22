@@ -143,3 +143,50 @@ def compute_national_aggregate(df):
         "sentiment_max",
     ]
     return agg
+
+
+def align_regional_data(beige_df, regional_fred_df):
+    """
+    Align district-level Beige Book sentiment with regional economic indicators.
+
+    For each (date, district) pair, find the next available coincident index reading.
+
+    Parameters
+    ----------
+    beige_df : pandas.core.frame.DataFrame
+        Must have columns: date, district, vader_compound.
+    regional_fred_df : pandas.core.frame.DataFrame
+        Must have columns: date, district, coincident_index.
+
+    Returns
+    -------
+    merged : pandas.core.frame.DataFrame
+        District-level data with sentiment and forward-looking regional indicator.
+    """
+    beige_df = beige_df.copy()
+    regional_fred_df = regional_fred_df.copy()
+
+    beige_df["date"] = pd.to_datetime(beige_df["date"])
+    regional_fred_df["date"] = pd.to_datetime(regional_fred_df["date"])
+
+    # Merge per district using forward-looking merge
+    merged_parts = []
+    for district in beige_df["district"].unique():
+        beige_dist = beige_df[beige_df["district"] == district].sort_values("date")
+        fred_dist = regional_fred_df[regional_fred_df["district"] == district].sort_values("date")
+
+        if fred_dist.empty:
+            continue
+
+        merged = pd.merge_asof(
+            beige_dist,
+            fred_dist[["date", "coincident_index"]],
+            on="date",
+            direction="forward",
+        )
+        merged_parts.append(merged)
+
+    if not merged_parts:
+        return pd.DataFrame()
+
+    return pd.concat(merged_parts, ignore_index=True)

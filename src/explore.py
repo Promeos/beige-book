@@ -177,6 +177,132 @@ def plot_correlation_matrix(corr_df, save=True):
     return fig
 
 
+def plot_regional_sentiment_vs_economy(df, save=True):
+    """
+    Scatter plot of district-level sentiment vs. coincident economic index.
+
+    Parameters
+    ----------
+    df : pandas.core.frame.DataFrame
+        Must have columns: district, vader_compound, coincident_index.
+    save : bool
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    """
+    data = df.dropna(subset=["vader_compound", "coincident_index"])
+    if data.empty:
+        return None
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+    for district in DISTRICTS:
+        subset = data[data["district"] == district]
+        if not subset.empty:
+            ax.scatter(subset["vader_compound"], subset["coincident_index"],
+                       alpha=0.5, s=20, label=district)
+
+    ax.set_xlabel("VADER Compound Sentiment")
+    ax.set_ylabel("State Coincident Economic Activity Index")
+    ax.set_title("District Sentiment vs. Regional Economic Activity")
+    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=8)
+    plt.tight_layout()
+
+    if save:
+        _save_fig(fig, "regional_sentiment_vs_economy.png")
+    return fig
+
+
+def plot_regional_correlation_bars(corr_data, save=True):
+    """
+    Bar chart of per-district correlation between sentiment and coincident index.
+
+    Parameters
+    ----------
+    corr_data : pandas.core.frame.DataFrame
+        Must have columns: district, correlation, p_value.
+    save : bool
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    """
+    corr_data = corr_data.sort_values("correlation")
+    colors = ["firebrick" if p < 0.05 else "lightgray" for p in corr_data["p_value"]]
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.barh(corr_data["district"], corr_data["correlation"], color=colors)
+    ax.set_xlabel("Pearson Correlation (sentiment vs. coincident index)")
+    ax.set_title("Regional Predictive Power by Federal Reserve District")
+    ax.axvline(x=0, color="gray", linewidth=0.8)
+
+    # Add legend for significance
+    from matplotlib.patches import Patch
+    legend_elements = [
+        Patch(facecolor="firebrick", label="p < 0.05"),
+        Patch(facecolor="lightgray", label="Not significant"),
+    ]
+    ax.legend(handles=legend_elements, loc="lower right")
+    plt.tight_layout()
+
+    if save:
+        _save_fig(fig, "regional_correlation_bars.png")
+    return fig
+
+
+def plot_district_timeseries_grid(df, save=True):
+    """
+    Grid of small multiples showing sentiment + coincident index per district.
+
+    Parameters
+    ----------
+    df : pandas.core.frame.DataFrame
+        Must have columns: date, district, vader_compound, coincident_index.
+    save : bool
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    """
+    districts = [d for d in DISTRICTS if d in df["district"].unique()]
+    n = len(districts)
+    cols = 3
+    rows = (n + cols - 1) // cols
+
+    fig, axes = plt.subplots(rows, cols, figsize=(16, rows * 3), sharex=True)
+    axes = axes.flatten()
+
+    for i, district in enumerate(districts):
+        ax = axes[i]
+        subset = df[df["district"] == district].sort_values("date")
+
+        ax.plot(subset["date"], subset["vader_compound"], color="steelblue",
+                linewidth=1, label="Sentiment")
+        ax.set_ylabel("Sentiment", fontsize=8, color="steelblue")
+        ax.set_title(district, fontsize=10, fontweight="bold")
+        ax.tick_params(axis="y", labelsize=7, labelcolor="steelblue")
+
+        if "coincident_index" in subset.columns and subset["coincident_index"].notna().any():
+            ax2 = ax.twinx()
+            ax2.plot(subset["date"], subset["coincident_index"], color="firebrick",
+                     linewidth=1, alpha=0.7, label="Econ. Activity")
+            ax2.tick_params(axis="y", labelsize=7, labelcolor="firebrick")
+
+        ax.tick_params(axis="x", rotation=45, labelsize=7)
+
+    # Hide unused subplots
+    for j in range(i + 1, len(axes)):
+        axes[j].set_visible(False)
+
+    fig.suptitle("Beige Book Sentiment vs. State Economic Activity by District",
+                 fontsize=13, fontweight="bold", y=1.02)
+    plt.tight_layout()
+
+    if save:
+        _save_fig(fig, "district_timeseries_grid.png")
+    return fig
+
+
 def _save_fig(fig, filename):
     """
     Save a matplotlib figure to the output directory.
