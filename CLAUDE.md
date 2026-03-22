@@ -10,21 +10,24 @@ Before starting work, check `.claude/agents/` for available specialized agents a
 ```
 beige_book/
 ├── src/
-│   ├── config.py      # Constants, paths, API keys, district names
-│   ├── acquire.py     # Beige Book scraper + FRED data fetcher
-│   ├── prepare.py     # Text cleaning, time alignment, merging
-│   ├── sentiment.py   # VADER sentiment scoring
-│   ├── explore.py     # Visualization functions
-│   ├── hypothesis.py  # Statistical tests (correlation, Granger)
-│   ├── model.py       # OLS regression, out-of-sample testing
-│   ├── sectors.py     # Sector extraction from district summaries
-│   └── maps.py        # Interactive choropleth maps (Plotly)
-├── data/              # Scraped data + FRED CSVs (gitignored)
-│   └── raw_html/      # Cached HTML pages
-├── output/            # Generated plots and results
-├── run_pipeline.py    # End-to-end pipeline runner
-├── MVP.ipynb          # Original prototype (reference only)
-└── .env               # FRED_API_KEY (gitignored)
+│   ├── config.py          # Constants, paths, API keys, district names
+│   ├── acquire.py         # Beige Book scraper + FRED data fetcher
+│   ├── prepare.py         # Text cleaning, time alignment, merging
+│   ├── sentiment.py       # VADER sentiment scoring
+│   ├── explore.py         # Visualization functions
+│   ├── hypothesis.py      # Statistical tests (correlation, Granger)
+│   ├── model.py           # OLS regression, out-of-sample testing
+│   ├── sectors.py         # Sector extraction via keyword classification
+│   ├── scrape_sectors.py  # Sector-level paragraph scraper from cached HTML
+│   └── maps.py            # Interactive choropleth maps (Plotly)
+├── data/                  # Scraped data + FRED CSVs (gitignored)
+│   └── raw_html/          # Cached HTML pages
+├── output/                # Generated plots and results
+├── run_pipeline.py        # End-to-end pipeline runner
+├── Final-Report.ipynb     # Full analysis notebook with findings
+├── ANALYSIS.md            # Regional deep dive and sector analysis
+├── MVP.ipynb              # Original prototype (reference only)
+└── .env                   # FRED_API_KEY (gitignored)
 ```
 
 ## Code Conventions
@@ -39,7 +42,7 @@ beige_book/
 - **Economic data**: FRED API via `fredapi` library
 - **Predictive tests**: Granger causality + OLS regression with lead-lag structure
 - **Time alignment**: `pd.merge_asof(direction='forward')` — Beige Book at time T maps to indicator at T+1
-- **Scraping**: Start with 2011-present (consistent HTML), extend backward later
+- **Scraping**: 2011--2026 (consistent HTML structure); extend backward later
 
 ## Workflow Preferences
 - **Show don't tell** — prefer working code over lengthy explanations

@@ -1,6 +1,6 @@
 # Does the Federal Reserve's Beige Book Predict the Economy?
 
-A sentiment analysis of regional economic narratives from the 12 Federal Reserve district banks (2011–2025).
+A sentiment analysis of regional economic narratives from the 12 Federal Reserve district banks (2011--2026).
 
 ## Overview
 
@@ -65,22 +65,24 @@ For the full regional deep dive (district-by-district profiles, sector specializ
 ```
 beige_book/
 ├── src/
-│   ├── config.py      # Constants, paths, API keys, district names
-│   ├── acquire.py     # Beige Book scraper + FRED data fetcher
-│   ├── prepare.py     # Text cleaning, time alignment, merging
-│   ├── sentiment.py   # VADER sentiment scoring
-│   ├── explore.py     # Visualization functions
-│   ├── hypothesis.py  # Statistical tests (correlation, Granger)
-│   ├── model.py       # OLS regression, out-of-sample testing
-│   ├── sectors.py     # Sector extraction from district summaries
-│   └── maps.py        # Interactive choropleth maps (Plotly)
-├── data/              # Scraped data + FRED CSVs (gitignored)
-│   └── raw_html/      # Cached HTML pages
-├── output/            # Generated plots and results
-├── run_pipeline.py    # End-to-end pipeline runner
-├── Final-Report.ipynb # Full analysis notebook with findings
-├── MVP.ipynb          # Original prototype (reference)
-└── .env               # FRED_API_KEY (gitignored)
+│   ├── config.py          # Constants, paths, API keys, district names
+│   ├── acquire.py         # Beige Book scraper + FRED data fetcher
+│   ├── prepare.py         # Text cleaning, time alignment, merging
+│   ├── sentiment.py       # VADER sentiment scoring
+│   ├── explore.py         # Visualization functions
+│   ├── hypothesis.py      # Statistical tests (correlation, Granger)
+│   ├── model.py           # OLS regression, out-of-sample testing
+│   ├── sectors.py         # Sector extraction via keyword classification
+│   ├── scrape_sectors.py  # Sector-level paragraph scraper from cached HTML
+│   └── maps.py            # Interactive choropleth maps (Plotly)
+├── data/                  # Scraped data + FRED CSVs (gitignored)
+│   └── raw_html/          # Cached HTML pages
+├── output/                # Generated plots and results
+├── run_pipeline.py        # End-to-end pipeline runner
+├── Final-Report.ipynb     # Full analysis notebook with findings
+├── ANALYSIS.md            # Regional deep dive and sector analysis
+├── MVP.ipynb              # Original prototype (reference)
+└── .env                   # FRED_API_KEY (gitignored)
 ```
 
 ## Setup
@@ -111,7 +113,7 @@ python run_pipeline.py
 
 | Step | Module | What it does |
 |------|--------|-------------|
-| 1. Acquire | `src/acquire.py` | Scrapes Beige Book reports from federalreserve.gov (2011--2025) and fetches indicator series from the FRED API |
+| 1. Acquire | `src/acquire.py` | Scrapes Beige Book reports from federalreserve.gov (2011--2026) and fetches indicator series from the FRED API |
 | 2. Prepare | `src/prepare.py` | Cleans text, normalizes district names, and aligns Beige Book dates to FRED reporting periods using `merge_asof(direction='forward')` |
 | 3. Sentiment | `src/sentiment.py` | Scores each district summary with VADER compound sentiment |
 | 4. Aggregate | `src/prepare.py` | Computes national sentiment aggregates (mean/std across 12 districts) and merges with FRED data |
@@ -162,7 +164,7 @@ python run_pipeline.py
 ## Limitations
 
 - **VADER** is a general-purpose sentiment tool, not tuned for economic language (e.g., "moderate" is positive in Fed-speak but neutral to VADER)
-- The **2019–2025 test period** is dominated by COVID, which may inflate apparent predictive power
+- The **2019--2026 test period** includes COVID and rapid rate hikes, which may inflate apparent predictive power
 - **Time alignment** is approximate — Beige Book publication dates don't perfectly match indicator release dates
 
 ## Future Work

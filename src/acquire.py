@@ -143,7 +143,7 @@ def _collect_report_urls(start_year, end_year):
 
         if html is None:
             # Try the new publications path (2026+)
-            alt_url = BASE_URL + f"/monetarypolicy/publications/beige-book-default.htm"
+            alt_url = BASE_URL + "/monetarypolicy/publications/beige-book-default.htm"
             html = _fetch_html(alt_url)
             if html is None:
                 logger.warning("Could not fetch index for %d", year)
@@ -654,11 +654,13 @@ def fetch_regional_fred_data(start_date="2000-01-01", end_date=None):
         try:
             data = fred.get_series(series_id, start_date, end_date)
             for date, value in data.items():
-                rows.append({
-                    "date": date,
-                    "district": district,
-                    "coincident_index": value,
-                })
+                rows.append(
+                    {
+                        "date": date,
+                        "district": district,
+                        "coincident_index": value,
+                    }
+                )
         except Exception as e:
             logger.error("Failed to fetch %s (%s): %s", series_id, district, e)
 

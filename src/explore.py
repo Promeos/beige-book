@@ -199,8 +199,13 @@ def plot_regional_sentiment_vs_economy(df, save=True):
     for district in DISTRICTS:
         subset = data[data["district"] == district]
         if not subset.empty:
-            ax.scatter(subset["vader_compound"], subset["coincident_index"],
-                       alpha=0.5, s=20, label=district)
+            ax.scatter(
+                subset["vader_compound"],
+                subset["coincident_index"],
+                alpha=0.5,
+                s=20,
+                label=district,
+            )
 
     ax.set_xlabel("VADER Compound Sentiment")
     ax.set_ylabel("State Coincident Economic Activity Index")
@@ -238,6 +243,7 @@ def plot_regional_correlation_bars(corr_data, save=True):
 
     # Add legend for significance
     from matplotlib.patches import Patch
+
     legend_elements = [
         Patch(facecolor="firebrick", label="p < 0.05"),
         Patch(facecolor="lightgray", label="Not significant"),
@@ -276,16 +282,30 @@ def plot_district_timeseries_grid(df, save=True):
         ax = axes[i]
         subset = df[df["district"] == district].sort_values("date")
 
-        ax.plot(subset["date"], subset["vader_compound"], color="steelblue",
-                linewidth=1, label="Sentiment")
+        ax.plot(
+            subset["date"],
+            subset["vader_compound"],
+            color="steelblue",
+            linewidth=1,
+            label="Sentiment",
+        )
         ax.set_ylabel("Sentiment", fontsize=8, color="steelblue")
         ax.set_title(district, fontsize=10, fontweight="bold")
         ax.tick_params(axis="y", labelsize=7, labelcolor="steelblue")
 
-        if "coincident_index" in subset.columns and subset["coincident_index"].notna().any():
+        if (
+            "coincident_index" in subset.columns
+            and subset["coincident_index"].notna().any()
+        ):
             ax2 = ax.twinx()
-            ax2.plot(subset["date"], subset["coincident_index"], color="firebrick",
-                     linewidth=1, alpha=0.7, label="Econ. Activity")
+            ax2.plot(
+                subset["date"],
+                subset["coincident_index"],
+                color="firebrick",
+                linewidth=1,
+                alpha=0.7,
+                label="Econ. Activity",
+            )
             ax2.tick_params(axis="y", labelsize=7, labelcolor="firebrick")
 
         ax.tick_params(axis="x", rotation=45, labelsize=7)
@@ -294,8 +314,12 @@ def plot_district_timeseries_grid(df, save=True):
     for j in range(i + 1, len(axes)):
         axes[j].set_visible(False)
 
-    fig.suptitle("Beige Book Sentiment vs. State Economic Activity by District",
-                 fontsize=13, fontweight="bold", y=1.02)
+    fig.suptitle(
+        "Beige Book Sentiment vs. State Economic Activity by District",
+        fontsize=13,
+        fontweight="bold",
+        y=1.02,
+    )
     plt.tight_layout()
 
     if save:
@@ -381,8 +405,14 @@ def plot_sector_timeseries(df, sectors=None, save=True):
 
     for color, sector in zip(palette, sectors):
         subset = agg[agg["sector"] == sector].sort_values("date")
-        ax.plot(subset["date"], subset["vader_compound"],
-                label=sector, color=color, linewidth=1.2, alpha=0.85)
+        ax.plot(
+            subset["date"],
+            subset["vader_compound"],
+            label=sector,
+            color=color,
+            linewidth=1.2,
+            alpha=0.85,
+        )
 
     ax.axhline(y=0, color="gray", linestyle="--", linewidth=0.8)
     ax.set_xlabel("Date")
@@ -421,13 +451,17 @@ def plot_sector_district_grid(df, sector, save=True):
     cols = 3
     rows = (n + cols - 1) // cols
 
-    fig, axes = plt.subplots(rows, cols, figsize=(16, rows * 3), sharex=True, sharey=True)
+    fig, axes = plt.subplots(
+        rows, cols, figsize=(16, rows * 3), sharex=True, sharey=True
+    )
     axes = axes.flatten()
 
     for i, district in enumerate(districts):
         ax = axes[i]
         subset = sector_data[sector_data["district"] == district].sort_values("date")
-        ax.plot(subset["date"], subset["vader_compound"], color="steelblue", linewidth=1)
+        ax.plot(
+            subset["date"], subset["vader_compound"], color="steelblue", linewidth=1
+        )
         ax.axhline(y=0, color="gray", linestyle="--", linewidth=0.5)
         ax.set_title(district, fontsize=10, fontweight="bold")
         ax.tick_params(axis="both", labelsize=7)
@@ -436,8 +470,12 @@ def plot_sector_district_grid(df, sector, save=True):
     for j in range(i + 1, len(axes)):
         axes[j].set_visible(False)
 
-    fig.suptitle(f"Beige Book {sector} Sentiment by District",
-                 fontsize=13, fontweight="bold", y=1.02)
+    fig.suptitle(
+        f"Beige Book {sector} Sentiment by District",
+        fontsize=13,
+        fontweight="bold",
+        y=1.02,
+    )
     plt.tight_layout()
 
     if save:
@@ -467,11 +505,15 @@ def plot_sector_volatility(df, save=True):
     )
 
     fig, ax = plt.subplots(figsize=(10, 6))
-    colors = plt.cm.RdYlGn((stats["mean"] - stats["mean"].min()) /
-                            (stats["mean"].max() - stats["mean"].min()))
+    colors = plt.cm.RdYlGn(
+        (stats["mean"] - stats["mean"].min())
+        / (stats["mean"].max() - stats["mean"].min())
+    )
     ax.barh(stats.index, stats["std"], color=colors)
     ax.set_xlabel("Sentiment Volatility (Std Dev)")
-    ax.set_title("Sector Sentiment Volatility (color = avg sentiment: red=low, green=high)")
+    ax.set_title(
+        "Sector Sentiment Volatility (color = avg sentiment: red=low, green=high)"
+    )
     plt.tight_layout()
 
     if save:

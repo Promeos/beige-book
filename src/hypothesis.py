@@ -150,8 +150,9 @@ def run_granger_tests(
     return results
 
 
-def compute_regional_correlations(df, sentiment_col="vader_compound",
-                                  indicator_col="coincident_index"):
+def compute_regional_correlations(
+    df, sentiment_col="vader_compound", indicator_col="coincident_index"
+):
     """
     Compute per-district correlation between sentiment and a regional indicator.
 
@@ -174,12 +175,14 @@ def compute_regional_correlations(df, sentiment_col="vader_compound",
             continue
 
         r, p = pearsonr(subset[sentiment_col], subset[indicator_col])
-        rows.append({
-            "district": district,
-            "correlation": r,
-            "p_value": p,
-            "n_obs": len(subset),
-        })
+        rows.append(
+            {
+                "district": district,
+                "correlation": r,
+                "p_value": p,
+                "n_obs": len(subset),
+            }
+        )
 
     results = pd.DataFrame(rows)
 
@@ -187,15 +190,20 @@ def compute_regional_correlations(df, sentiment_col="vader_compound",
     print("-" * 60)
     for _, row in results.iterrows():
         marker = "***" if row["p_value"] < ALPHA else ""
-        print(f"  {row['district']:15s}  r={row['correlation']:+.3f}  "
-              f"p={row['p_value']:.4f}  n={row['n_obs']:.0f} {marker}")
+        print(
+            f"  {row['district']:15s}  r={row['correlation']:+.3f}  "
+            f"p={row['p_value']:.4f}  n={row['n_obs']:.0f} {marker}"
+        )
 
     return results
 
 
-def compute_sector_correlations(sector_df, regional_df,
-                                sentiment_col="vader_compound",
-                                indicator_col="coincident_index"):
+def compute_sector_correlations(
+    sector_df,
+    regional_df,
+    sentiment_col="vader_compound",
+    indicator_col="coincident_index",
+):
     """
     Compute correlation between each sector's sentiment and regional economic
     activity, aggregated across all districts.
@@ -229,17 +237,21 @@ def compute_sector_correlations(sector_df, regional_df,
 
     rows = []
     for sector in sorted(merged["sector"].unique()):
-        subset = merged[merged["sector"] == sector][[sentiment_col, indicator_col]].dropna()
+        subset = merged[merged["sector"] == sector][
+            [sentiment_col, indicator_col]
+        ].dropna()
         if len(subset) < 10:
             continue
 
         r, p = pearsonr(subset[sentiment_col], subset[indicator_col])
-        rows.append({
-            "sector": sector,
-            "correlation": r,
-            "p_value": p,
-            "n_obs": len(subset),
-        })
+        rows.append(
+            {
+                "sector": sector,
+                "correlation": r,
+                "p_value": p,
+                "n_obs": len(subset),
+            }
+        )
 
     results = pd.DataFrame(rows).sort_values("correlation", ascending=False)
 
@@ -247,15 +259,20 @@ def compute_sector_correlations(sector_df, regional_df,
     print("-" * 60)
     for _, row in results.iterrows():
         marker = "***" if row["p_value"] < ALPHA else ""
-        print(f"  {row['sector']:25s}  r={row['correlation']:+.3f}  "
-              f"p={row['p_value']:.4f}  n={row['n_obs']:.0f} {marker}")
+        print(
+            f"  {row['sector']:25s}  r={row['correlation']:+.3f}  "
+            f"p={row['p_value']:.4f}  n={row['n_obs']:.0f} {marker}"
+        )
 
     return results
 
 
-def compute_sector_district_correlations(sector_df, regional_df,
-                                         sentiment_col="vader_compound",
-                                         indicator_col="coincident_index"):
+def compute_sector_district_correlations(
+    sector_df,
+    regional_df,
+    sentiment_col="vader_compound",
+    indicator_col="coincident_index",
+):
     """
     Compute correlation for each (sector, district) pair.
 
@@ -294,12 +311,14 @@ def compute_sector_district_correlations(sector_df, regional_df,
             continue
 
         r, p = pearsonr(subset[sentiment_col], subset[indicator_col])
-        rows.append({
-            "sector": sector,
-            "district": district,
-            "correlation": r,
-            "p_value": p,
-            "n_obs": len(subset),
-        })
+        rows.append(
+            {
+                "sector": sector,
+                "district": district,
+                "correlation": r,
+                "p_value": p,
+                "n_obs": len(subset),
+            }
+        )
 
     return pd.DataFrame(rows)

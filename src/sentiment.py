@@ -5,6 +5,7 @@ Supports two models:
 - VADER: Fast, rule-based, general-purpose
 - FinBERT: Transformer-based, trained on financial text (more accurate for economic language)
 """
+
 import logging
 
 import pandas as pd
@@ -59,6 +60,7 @@ def score_finbert_sentence_level(text):
         finbert_n_sentences (int).
     """
     import re
+
     global _finbert_pipeline
 
     empty = {
@@ -76,7 +78,7 @@ def score_finbert_sentence_level(text):
         _finbert_pipeline = _load_finbert()
 
     # Split into sentences
-    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
     sentences = [s.strip() for s in sentences if len(s.strip()) > 10]
 
     if not sentences:
@@ -124,6 +126,7 @@ def _load_finbert():
         A HuggingFace sentiment-analysis pipeline using FinBERT.
     """
     from transformers import pipeline
+
     logger.info("Loading FinBERT model (first run downloads ~400MB)...")
     pipe = pipeline(
         "sentiment-analysis",
@@ -181,6 +184,7 @@ def build_sentence_detail(df, text_col="summary"):
         confidence, finbert_positive, finbert_negative, finbert_neutral.
     """
     import re
+
     global _finbert_pipeline
 
     if _finbert_pipeline is None:
@@ -193,33 +197,43 @@ def build_sentence_detail(df, text_col="summary"):
         if not isinstance(text, str) or not text.strip():
             continue
 
-        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
         sentences = [s.strip() for s in sentences if len(s.strip()) > 10]
 
         for j, sent in enumerate(sentences):
             # Get all label scores
-            results = _finbert_pipeline(sent, truncation=True, max_length=512, top_k=None)
+            results = _finbert_pipeline(
+                sent, truncation=True, max_length=512, top_k=None
+            )
             label_scores = {r["label"].lower(): r["score"] for r in results}
             top_label = max(label_scores, key=label_scores.get)
 
-            rows.append({
-                "date": row["date"],
-                "district": row["district"],
-                "sentence_idx": j,
-                "sentence": sent,
-                "label": top_label,
-                "confidence": label_scores[top_label],
-                "finbert_positive": label_scores.get("positive", 0.0),
-                "finbert_negative": label_scores.get("negative", 0.0),
-                "finbert_neutral": label_scores.get("neutral", 0.0),
-            })
+            rows.append(
+                {
+                    "date": row["date"],
+                    "district": row["district"],
+                    "sentence_idx": j,
+                    "sentence": sent,
+                    "label": top_label,
+                    "confidence": label_scores[top_label],
+                    "finbert_positive": label_scores.get("positive", 0.0),
+                    "finbert_negative": label_scores.get("negative", 0.0),
+                    "finbert_neutral": label_scores.get("neutral", 0.0),
+                }
+            )
 
         if (i + 1) % 100 == 0:
-            logger.info("  Processed %d/%d summaries (%d sentences so far)",
-                        i + 1, total, len(rows))
+            logger.info(
+                "  Processed %d/%d summaries (%d sentences so far)",
+                i + 1,
+                total,
+                len(rows),
+            )
 
     detail_df = pd.DataFrame(rows)
-    logger.info("Sentence detail complete: %d sentences from %d summaries", len(rows), total)
+    logger.info(
+        "Sentence detail complete: %d sentences from %d summaries", len(rows), total
+    )
     return detail_df
 
 
@@ -248,6 +262,8 @@ def add_finbert_scores(df, text_col="summary"):
     df["finbert_negative"] = scores["finbert_negative"]
     df["finbert_neutral"] = scores["finbert_neutral"]
     df["finbert_n_sentences"] = scores["finbert_n_sentences"]
-    logger.info("FinBERT scoring complete. %d total sentences scored.",
-                df["finbert_n_sentences"].sum())
+    logger.info(
+        "FinBERT scoring complete. %d total sentences scored.",
+        df["finbert_n_sentences"].sum(),
+    )
     return df

@@ -173,7 +173,9 @@ def align_regional_data(beige_df, regional_fred_df):
     merged_parts = []
     for district in beige_df["district"].unique():
         beige_dist = beige_df[beige_df["district"] == district].sort_values("date")
-        fred_dist = regional_fred_df[regional_fred_df["district"] == district].sort_values("date")
+        fred_dist = regional_fred_df[
+            regional_fred_df["district"] == district
+        ].sort_values("date")
 
         if fred_dist.empty:
             continue

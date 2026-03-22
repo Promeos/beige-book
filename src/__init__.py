@@ -7,7 +7,9 @@ scoring, visualization, and statistical testing.
 
 from .acquire import get_beige_data, get_fred_data, get_regional_fred_data
 from .prepare import (
-    prep_beige_data, align_time_periods, compute_national_aggregate,
+    prep_beige_data,
+    align_time_periods,
+    compute_national_aggregate,
     align_regional_data,
 )
 from .sentiment import add_sentiment_scores

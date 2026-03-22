@@ -252,15 +252,17 @@ def score_sectors(text):
 
     for sector, sector_text in sector_texts.items():
         scores = _analyzer.polarity_scores(sector_text)
-        results.append({
-            "sector": sector,
-            "text": sector_text,
-            "vader_compound": scores["compound"],
-            "vader_pos": scores["pos"],
-            "vader_neg": scores["neg"],
-            "vader_neu": scores["neu"],
-            "sentence_count": len(sector_text.split(". ")),
-        })
+        results.append(
+            {
+                "sector": sector,
+                "text": sector_text,
+                "vader_compound": scores["compound"],
+                "vader_pos": scores["pos"],
+                "vader_neg": scores["neg"],
+                "vader_neu": scores["neu"],
+                "sentence_count": len(sector_text.split(". ")),
+            }
+        )
 
     return results
 
@@ -297,8 +299,14 @@ def build_sector_dataframe(df, text_col="summary"):
 
     # Reorder columns
     col_order = [
-        "date", "district", "sector", "text",
-        "vader_compound", "vader_pos", "vader_neg", "vader_neu",
+        "date",
+        "district",
+        "sector",
+        "text",
+        "vader_compound",
+        "vader_pos",
+        "vader_neg",
+        "vader_neu",
         "sentence_count",
     ]
     sector_df = sector_df[[c for c in col_order if c in sector_df.columns]]

@@ -8,15 +8,15 @@ for each district from each report, producing a long-format DataFrame:
 This goes beyond the "Summary of Economic Activity" paragraph to capture
 the full granular detail of each Beige Book report.
 """
+
 import re
 import logging
-from pathlib import Path
 
 import pandas as pd
 from bs4 import BeautifulSoup
 
-from src.config import DATA_DIR, RAW_HTML_DIR, DISTRICT_ALIASES, START_YEAR, END_YEAR
-from src.acquire import _parse_date_from_url, _normalize_district
+from src.config import DATA_DIR, RAW_HTML_DIR, BASE_URL, DISTRICTS
+from src.acquire import _parse_date_from_url, _normalize_district, _fetch_html
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +77,10 @@ def scrape_all_sectors():
         html = filepath.read_text(encoding="utf-8")
 
         if "-summary" in filepath.name:
-            # 2024+ format: summary pages only have summary paragraphs, no sectors
-            # Skip these — they don't have sector breakdowns
+            # 2024+ format: summary pages don't have sectors
+            # Fetch individual district pages instead
+            rows = _scrape_district_pages(filepath.name, date)
+            all_rows.extend(rows)
             continue
 
         rows = _extract_sectors_from_report(html, date)
@@ -87,9 +89,112 @@ def scrape_all_sectors():
     df = pd.DataFrame(all_rows)
     if not df.empty:
         df["date"] = pd.to_datetime(df["date"])
-    logger.info("Extracted %d sector entries from %d reports", len(df),
-                df["date"].nunique() if not df.empty else 0)
+    logger.info(
+        "Extracted %d sector entries from %d reports",
+        len(df),
+        df["date"].nunique() if not df.empty else 0,
+    )
     return df
+
+
+def _scrape_district_pages(summary_filename, date):
+    """
+    Fetch and extract sectors from individual district pages (2024+ format).
+
+    For 2024+, each district has its own page:
+    beigebook202601-boston.htm, beigebook202601-cleveland.htm, etc.
+
+    Parameters
+    ----------
+    summary_filename : str
+        The summary page filename (e.g., beigebook202601-summary.htm)
+    date : str
+
+    Returns
+    -------
+    rows : list of dict
+    """
+    # Build district page URLs from the summary filename
+    # beigebook202601-summary.htm → beigebook202601-{district}.htm
+    base = summary_filename.replace("-summary.htm", "")
+
+    district_slugs = {
+        "Boston": "boston",
+        "New York": "new-york",
+        "Philadelphia": "philadelphia",
+        "Cleveland": "cleveland",
+        "Richmond": "richmond",
+        "Atlanta": "atlanta",
+        "Chicago": "chicago",
+        "St. Louis": "st-louis",
+        "Minneapolis": "minneapolis",
+        "Kansas City": "kansas-city",
+        "Dallas": "dallas",
+        "San Francisco": "san-francisco",
+    }
+
+    all_rows = []
+    for district, slug in district_slugs.items():
+        page_url = f"{BASE_URL}/monetarypolicy/{base}-{slug}.htm"
+        html = _fetch_html(page_url)
+        if html is None:
+            logger.warning("Could not fetch district page for %s (%s)", district, date)
+            continue
+
+        rows = _extract_sectors_from_district_page(html, date, district)
+        all_rows.extend(rows)
+
+    return all_rows
+
+
+def _extract_sectors_from_district_page(html, date, district):
+    """
+    Extract sectors from an individual district page (2024+ format).
+
+    These pages have sectors as <h4> headings with following <p> content.
+
+    Parameters
+    ----------
+    html : str
+    date : str
+    district : str
+
+    Returns
+    -------
+    rows : list of dict
+    """
+    clean_html = html.replace("<br />", "").replace("<br>", "")
+    soup = BeautifulSoup(clean_html, "html.parser")
+
+    rows = []
+    # Sectors are h4 headings on individual district pages
+    headings = soup.find_all("h4")
+
+    for i, heading in enumerate(headings):
+        sector_name = heading.get_text(strip=True)
+        if not sector_name or sector_name in SKIP_SECTORS:
+            continue
+        if _is_district(sector_name):
+            continue
+
+        normalized = _normalize_sector(sector_name)
+        if not normalized:
+            continue
+
+        # Get paragraphs until next h4
+        next_h = headings[i + 1] if i + 1 < len(headings) else None
+        paragraphs = _get_paragraphs_between(heading, next_h)
+        text = " ".join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
+
+        if len(text) > 20:
+            rows.append({
+                "date": date,
+                "district": district,
+                "sector": normalized,
+                "text": text,
+            })
+
+    return rows
 
 
 def _extract_sectors_from_report(html, date):
@@ -110,8 +215,23 @@ def _extract_sectors_from_report(html, date):
 
     rows = []
 
-    # Find all district headings (h4 tags)
+    # Try multiple heading tag formats:
+    # 2017-2023: <h4>Federal Reserve Bank of Boston</h4>
+    # 2011-2016: <h2>First District--Boston</h2>
     district_headings = soup.find_all("h4")
+    district_headings = [
+        h for h in district_headings if _is_district(h.get_text(strip=True))
+    ]
+
+    if not district_headings:
+        # Try h2 format (2011-2016)
+        district_headings = soup.find_all("h2")
+        district_headings = [
+            h for h in district_headings if _is_district(h.get_text(strip=True))
+        ]
+
+    if not district_headings:
+        return rows
 
     for i, heading in enumerate(district_headings):
         district_name = heading.get_text(strip=True)
@@ -120,8 +240,10 @@ def _extract_sectors_from_report(html, date):
 
         canonical = _normalize_district(district_name)
 
-        # Get all <p> tags between this h4 and the next h4
-        next_heading = district_headings[i + 1] if i + 1 < len(district_headings) else None
+        # Get all <p> tags between this heading and the next district heading
+        next_heading = (
+            district_headings[i + 1] if i + 1 < len(district_headings) else None
+        )
         paragraphs = _get_paragraphs_between(heading, next_heading)
 
         current_sector = None
@@ -134,11 +256,12 @@ def _extract_sectors_from_report(html, date):
                 # Save the previous sector
                 if current_sector and current_text_parts:
                     text = " ".join(current_text_parts)
-                    if current_sector not in SKIP_SECTORS and len(text) > 20:
+                    normalized = _normalize_sector(current_sector)
+                    if current_sector not in SKIP_SECTORS and normalized and len(text) > 20:
                         rows.append({
                             "date": date,
                             "district": canonical,
-                            "sector": _normalize_sector(current_sector),
+                            "sector": normalized,
                             "text": text,
                         })
 
@@ -147,7 +270,7 @@ def _extract_sectors_from_report(html, date):
                 # Get the rest of this paragraph (after the strong tag)
                 full_text = p.get_text(strip=True)
                 # Remove the sector name from the beginning
-                sector_text = full_text[len(current_sector):].strip()
+                sector_text = full_text[len(current_sector) :].strip()
                 current_text_parts = [sector_text] if sector_text else []
             else:
                 # Continuation paragraph (no strong tag) — append to current sector
@@ -161,13 +284,16 @@ def _extract_sectors_from_report(html, date):
         # Save the last sector
         if current_sector and current_text_parts:
             text = " ".join(current_text_parts)
-            if current_sector not in SKIP_SECTORS and len(text) > 20:
-                rows.append({
-                    "date": date,
-                    "district": canonical,
-                    "sector": _normalize_sector(current_sector),
-                    "text": text,
-                })
+            normalized = _normalize_sector(current_sector)
+            if current_sector not in SKIP_SECTORS and normalized and len(text) > 20:
+                rows.append(
+                    {
+                        "date": date,
+                        "district": canonical,
+                        "sector": normalized,
+                        "text": text,
+                    }
+                )
 
     return rows
 
@@ -181,19 +307,34 @@ def _get_paragraphs_between(start_tag, end_tag):
             break
         if current.name == "p":
             paragraphs.append(current)
-        elif current.name in ("h4", "h3", "h2"):
-            break
+        elif current.name in ("h2", "h3", "h4") and current != start_tag:
+            # Stop at next heading (but not our own tag level in case of nested structures)
+            if _is_district(current.get_text(strip=True)):
+                break
         current = current.find_next_sibling()
     return paragraphs
 
 
 def _is_district(text):
-    """Check if text is a district heading."""
+    """Check if text is a district heading (handles both naming conventions)."""
     district_keywords = [
-        "Boston", "New York", "Philadelphia", "Cleveland", "Richmond",
-        "Atlanta", "Chicago", "St. Louis", "Minneapolis", "Kansas City",
-        "Dallas", "San Francisco",
+        "Boston",
+        "New York",
+        "Philadelphia",
+        "Cleveland",
+        "Richmond",
+        "Atlanta",
+        "Chicago",
+        "St. Louis",
+        "Minneapolis",
+        "Kansas City",
+        "Dallas",
+        "San Francisco",
     ]
+    # Skip section headers that contain district keywords
+    skip_phrases = ["Summary of Commentary", "Highlights by", "Summary of Economic"]
+    if any(skip in text for skip in skip_phrases):
+        return False
     return any(kw in text for kw in district_keywords)
 
 
@@ -205,37 +346,59 @@ def _normalize_sector(name):
     """
     name = name.strip().rstrip(":")
 
-    # Common normalizations
-    mappings = {
-        "Employment and Wages": "Employment & Wages",
-        "Labor Markets": "Employment & Wages",
-        "Hiring and Wages": "Employment & Wages",
-        "Wages and Prices": "Prices",
-        "Prices and Wages": "Prices",
-        "Consumer Spending": "Consumer Spending",
-        "Retail, Travel, and Tourism": "Consumer Spending",
-        "Retail and Tourism": "Consumer Spending",
-        "Retail Trade": "Consumer Spending",
-        "Real Estate and Construction": "Real Estate & Construction",
-        "Construction and Real Estate": "Real Estate & Construction",
-        "Residential Real Estate and Construction": "Real Estate & Construction",
-        "Commercial Real Estate and Construction": "Real Estate & Construction",
-        "Financial Services": "Financial Services",
-        "Banking and Finance": "Financial Services",
-        "Banking": "Financial Services",
-        "Professional and Business Services": "Business Services",
-        "Nonfinancial Services": "Business Services",
-        "Services": "Business Services",
-        "Transportation": "Transportation",
-        "Freight": "Transportation",
-        "Ports and Transportation": "Transportation",
-        "Transportation and Warehousing": "Transportation",
-        "Agriculture": "Agriculture",
-        "Agriculture and Natural Resources": "Agriculture",
-        "Agricultural Conditions": "Agriculture",
-        "Natural Resources and Energy": "Energy",
-        "Energy": "Energy",
-        "Oil and Gas": "Energy",
-    }
+    # Normalize to canonical sector names
+    name_lower = name.lower().rstrip(".").strip()
 
-    return mappings.get(name, name)
+    # Map by keyword matching (order matters — more specific first)
+    keyword_map = [
+        # Employment & Wages
+        (
+            ["employment", "labor", "hiring", "staffing", "worker experience"],
+            "Employment & Wages",
+        ),
+        # Prices
+        (["price", "cost", "inflation"], "Prices"),
+        # Manufacturing
+        (["manufactur", "industrial production"], "Manufacturing"),
+        # Consumer Spending
+        (["consumer", "retail", "tourism", "hospitality"], "Consumer Spending"),
+        # Real Estate & Construction
+        (
+            ["real estate", "construction", "residential", "commercial real"],
+            "Real Estate & Construction",
+        ),
+        # Financial Services
+        (["financial", "banking", "finance", "loan", "lending"], "Financial Services"),
+        # Business Services
+        (
+            [
+                "business service",
+                "professional service",
+                "nonfinancial service",
+                "non-financial service",
+                "software",
+                "information technology",
+                "it service",
+                "selected business",
+            ],
+            "Business Services",
+        ),
+        # Transportation
+        (["transport", "freight", "port", "shipping", "trucking"], "Transportation"),
+        # Agriculture
+        (["agricultur", "farm", "crop"], "Agriculture"),
+        # Energy
+        (["energy", "oil", "gas", "mining", "natural resource"], "Energy"),
+        # Community
+        (["community", "minority", "women-owned"], "Community"),
+    ]
+
+    for keywords, canonical in keyword_map:
+        if any(kw in name_lower for kw in keywords):
+            return canonical
+
+    # Skip junk entries
+    if len(name) <= 2 or name in (".", "across", "ervices"):
+        return None
+
+    return name
