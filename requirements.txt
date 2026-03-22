@@ -1,0 +1,15 @@
+requests
+beautifulsoup4
+scrapy
+pandas
+numpy
+scipy
+matplotlib
+seaborn
+plotly
+nltk
+vaderSentiment
+fredapi
+python-dotenv
+statsmodels
+scikit-learn

@@ -1,47 +1,145 @@
+"""
+Prepare and align Beige Book text data with FRED economic indicators.
+"""
+
+import re
 import pandas as pd
-import numpy as np
 
-from pandas.api.types import CategoricalDtype
-
-
-def prep_beige_data(dataset):
-    '''
-    Returns 
-
-    Parameters
-    ----------
-    None 
-    
-    Returns
-    -------
-    '''
-    dataset = format_column_names(dataset)
-
-    return dataset
+from src.config import DISTRICT_ALIASES
 
 
-def format_column_names(dataset):
-    '''
-    Formats all column names to be lowecase and replaces column names
-    with descriptive names.
+def prep_beige_data(df):
+    """
+    Clean and prepare scraped Beige Book data.
 
     Parameters
     ----------
-    dataset
-    
+    df : pandas.core.frame.DataFrame
+        Raw long-format DataFrame with columns: date, district, summary.
+
     Returns
     -------
-    dataset
-    '''
-    # Lowercase the column names
-    dataset.columns = [column.lower() for column in dataset.columns]
+    df : pandas.core.frame.DataFrame
+        Cleaned DataFrame.
+    """
+    df = df.copy()
+    df["date"] = pd.to_datetime(df["date"])
+    df["summary"] = df["summary"].apply(clean_text)
+    df["district"] = df["district"].apply(normalize_district)
 
-    # Rename columns with more descriptive names
-    dataset.rename(columns={'[name]':'[new name]'},
-                   inplace=True)
-
-    return dataset
+    # Drop rows with empty summaries
+    df = df[df["summary"].str.len() > 0].reset_index(drop=True)
+    return df
 
 
+def clean_text(text):
+    """
+    Clean a raw text string from HTML scraping.
+
+    Parameters
+    ----------
+    text : str
+
+    Returns
+    -------
+    str
+    """
+    if not isinstance(text, str):
+        return ""
+    # Remove HTML artifacts
+    text = re.sub(r"<[^>]+>", "", text)
+    # Normalize whitespace
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
 
 
+def normalize_district(name):
+    """
+    Normalize a district name to its canonical short form.
+
+    Parameters
+    ----------
+    name : str
+
+    Returns
+    -------
+    str
+    """
+    if not isinstance(name, str):
+        return name
+    for alias, canonical in DISTRICT_ALIASES.items():
+        if alias in name or canonical in name:
+            return canonical
+    return name.strip()
+
+
+def align_time_periods(beige_df, fred_df):
+    """
+    Align Beige Book publication dates with the next available
+    economic indicator readings using a forward merge.
+
+    This creates the lead structure needed for predictive analysis:
+    sentiment at time T maps to indicators at T+1.
+
+    Parameters
+    ----------
+    beige_df : pandas.core.frame.DataFrame
+        Beige Book data with at least columns: date, district, vader_compound.
+    fred_df : pandas.core.frame.DataFrame
+        FRED indicators with columns: date, GDPC1, UNRATE, CPIAUCSL, SP500.
+
+    Returns
+    -------
+    merged : pandas.core.frame.DataFrame
+        Combined DataFrame with sentiment and forward-looking indicators.
+    """
+    beige_df = beige_df.copy()
+    fred_df = fred_df.copy()
+
+    beige_df["date"] = pd.to_datetime(beige_df["date"])
+    fred_df["date"] = pd.to_datetime(fred_df["date"])
+
+    # Sort both by date for merge_asof
+    beige_df = beige_df.sort_values("date")
+    fred_df = fred_df.sort_values("date")
+
+    # Forward merge: each Beige Book date gets the NEXT indicator reading
+    merged = pd.merge_asof(
+        beige_df,
+        fred_df,
+        on="date",
+        direction="forward",
+        suffixes=("", "_indicator"),
+    )
+
+    return merged
+
+
+def compute_national_aggregate(df):
+    """
+    Compute national-level sentiment aggregates per report date.
+
+    Parameters
+    ----------
+    df : pandas.core.frame.DataFrame
+        Long-format DataFrame with columns: date, district, vader_compound.
+
+    Returns
+    -------
+    agg : pandas.core.frame.DataFrame
+        One row per date with mean, std, min, max sentiment across districts.
+    """
+    agg = (
+        df.groupby("date")["vader_compound"]
+        .agg(["mean", "std", "min", "max"])
+        .reset_index()
+    )
+
+    agg.columns = [
+        "date",
+        "sentiment_mean",
+        "sentiment_std",
+        "sentiment_min",
+        "sentiment_max",
+    ]
+    return agg

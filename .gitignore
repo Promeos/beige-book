@@ -1,6 +1,75 @@
-.ipynb_checkpoints/
-__pycache__
-.DS_Store
-.vscode/
-*.json
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+eggs/
+*.whl
+sdist/
+
+# Virtual environments
+.venv/
+venv/
+.venv*/
+ENV/
+env/
 env.py
+
+# Environment variables
+.env
+.env.*
+
+# Data (too large for git — regenerate with run_pipeline.py)
+data/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Data files
+*.csv
+*.tsv
+*.parquet
+*.h5
+*.hdf5
+*.feather
+*.pkl
+*.pickle
+*.json
+
+# Model artifacts
+*.joblib
+*.model
+*.pt
+*.pth
+*.onnx
+
+# Logs
+*.log
+
+# Coverage / testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Mypy / type checking
+.mypy_cache/
+
+# Profiling
+*.prof

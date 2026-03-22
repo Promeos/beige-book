@@ -1,0 +1,135 @@
+"""
+Beige Book Sentiment Analysis Pipeline
+
+End-to-end pipeline that scrapes Beige Book text, scores sentiment,
+fetches FRED economic indicators, and tests whether sentiment has
+predictive power for economic outcomes.
+
+Usage:
+    python run_pipeline.py
+"""
+
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+def main():
+    """
+    Run the full Beige Book sentiment analysis pipeline.
+
+    Steps: acquire data, clean text, score sentiment, align with FRED
+    indicators, generate visualizations, run statistical tests, and
+    evaluate predictive models.
+    """
+    # ---- Step 1: Acquire data ----
+    logger.info("Step 1: Acquiring data...")
+
+    from src.acquire import get_beige_data, get_fred_data
+
+    beige_df = get_beige_data()
+    logger.info(
+        "Beige Book: %d rows, %d districts, %d report dates",
+        len(beige_df),
+        beige_df["district"].nunique(),
+        beige_df["date"].nunique(),
+    )
+
+    fred_df = get_fred_data()
+    logger.info("FRED indicators: %d rows", len(fred_df))
+
+    # ---- Step 2: Prepare ----
+    logger.info("Step 2: Preparing data...")
+
+    from src.prepare import (
+        prep_beige_data,
+        align_time_periods,
+        compute_national_aggregate,
+    )
+
+    beige_df = prep_beige_data(beige_df)
+
+    # ---- Step 3: Sentiment scoring ----
+    logger.info("Step 3: Scoring sentiment...")
+
+    from src.sentiment import add_sentiment_scores
+
+    beige_df = add_sentiment_scores(beige_df)
+    logger.info(
+        "Sentiment score range: [%.3f, %.3f]",
+        beige_df["vader_compound"].min(),
+        beige_df["vader_compound"].max(),
+    )
+
+    # ---- Step 4: Compute aggregates and align ----
+    logger.info("Step 4: Computing national aggregates and aligning with FRED...")
+
+    national_df = compute_national_aggregate(beige_df)
+    merged_df = align_time_periods(national_df, fred_df)
+    logger.info("Merged dataset: %d rows", len(merged_df))
+
+    # ---- Step 5: Explore ----
+    logger.info("Step 5: Generating visualizations...")
+
+    from src.explore import (
+        plot_sentiment_timeseries,
+        plot_regional_comparison,
+        plot_sentiment_vs_indicator,
+    )
+
+    plot_sentiment_timeseries(national_df)
+    plot_regional_comparison(beige_df)
+
+    indicator_labels = {
+        "GDPC1": "Real GDP",
+        "UNRATE": "Unemployment Rate (%)",
+        "CPIAUCSL": "CPI",
+        "SP500": "S&P 500",
+    }
+    for col, label in indicator_labels.items():
+        if col in merged_df.columns:
+            plot_sentiment_vs_indicator(merged_df, col, label)
+
+    # ---- Step 6: Statistical tests ----
+    logger.info("Step 6: Running statistical tests...")
+
+    from src.hypothesis import compute_lagged_correlations, run_granger_tests
+
+    print("\n" + "=" * 60)
+    print("LAGGED CORRELATIONS")
+    print("=" * 60)
+    corr_df = compute_lagged_correlations(merged_df)
+    if not corr_df.empty:
+        print(corr_df.to_string(index=False))
+
+    print("\n" + "=" * 60)
+    print("GRANGER CAUSALITY TESTS")
+    print("=" * 60)
+    run_granger_tests(merged_df)
+
+    # ---- Step 7: Predictive models ----
+    logger.info("Step 7: Running predictive models...")
+
+    from src.model import run_all_regressions, out_of_sample_test
+
+    print("\n" + "=" * 60)
+    print("OLS REGRESSIONS")
+    print("=" * 60)
+    run_all_regressions(merged_df)
+
+    print("\n" + "=" * 60)
+    print("OUT-OF-SAMPLE EVALUATION")
+    print("=" * 60)
+    for col in ["GDPC1", "UNRATE", "CPIAUCSL", "SP500"]:
+        if col in merged_df.columns:
+            out_of_sample_test(merged_df, col)
+
+    logger.info("Pipeline complete!")
+
+
+if __name__ == "__main__":
+    main()
