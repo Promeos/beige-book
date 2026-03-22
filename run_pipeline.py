@@ -128,6 +128,63 @@ def main():
         if col in merged_df.columns:
             out_of_sample_test(merged_df, col)
 
+    # ---- Step 8: Sector-specific predictive analysis ----
+    logger.info("Step 8: Sector-specific predictive analysis...")
+
+    import pandas as pd
+    from src.config import DATA_DIR
+    from src.acquire import get_sector_fred_data
+    from src.prepare import (
+        compute_sector_national_aggregate,
+        align_sector_with_indicators,
+    )
+    from src.hypothesis import (
+        compute_sector_indicator_correlations,
+        run_sector_granger_tests,
+    )
+    from src.model import run_sector_regressions, sector_out_of_sample_test
+    from src.explore import plot_sector_vs_indicator, plot_sector_predictive_grid
+
+    sector_csv = DATA_DIR / "sector_sentiment.csv"
+    if sector_csv.exists():
+        sector_df = pd.read_csv(sector_csv, parse_dates=["date"])
+        sector_fred_df = get_sector_fred_data()
+
+        sector_national = compute_sector_national_aggregate(sector_df)
+        sector_merged = align_sector_with_indicators(sector_national, sector_fred_df)
+        logger.info(
+            "Sector-indicator merged: %d rows, %d sectors",
+            len(sector_merged),
+            sector_merged["sector"].nunique(),
+        )
+
+        print("\n" + "=" * 60)
+        print("SECTOR-INDICATOR CORRELATIONS")
+        print("=" * 60)
+        compute_sector_indicator_correlations(sector_merged)
+
+        print("\n" + "=" * 60)
+        print("SECTOR GRANGER CAUSALITY")
+        print("=" * 60)
+        run_sector_granger_tests(sector_merged)
+
+        print("\n" + "=" * 60)
+        print("SECTOR OLS REGRESSIONS")
+        print("=" * 60)
+        run_sector_regressions(sector_merged)
+
+        print("\n" + "=" * 60)
+        print("SECTOR OUT-OF-SAMPLE EVALUATION")
+        print("=" * 60)
+        sector_out_of_sample_test(sector_merged)
+
+        # Visualizations
+        plot_sector_predictive_grid(sector_merged)
+        for sector in sector_merged["sector"].unique():
+            plot_sector_vs_indicator(sector_merged, sector)
+    else:
+        logger.warning("No sector_sentiment.csv found. Skipping sector analysis.")
+
     logger.info("Pipeline complete!")
 
 

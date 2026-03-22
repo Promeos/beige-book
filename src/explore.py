@@ -521,6 +521,124 @@ def plot_sector_volatility(df, save=True):
     return fig
 
 
+def plot_sector_vs_indicator(sector_merged_df, sector, indicator_label=None, save=True):
+    """
+    Dual-axis time series of a sector's sentiment vs. its matched FRED indicator.
+
+    Parameters
+    ----------
+    sector_merged_df : pandas.core.frame.DataFrame
+        Output of prepare.align_sector_with_indicators().
+    sector : str
+        Sector name (e.g., "Manufacturing").
+    indicator_label : str
+    save : bool
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    """
+    subset = sector_merged_df[sector_merged_df["sector"] == sector].copy()
+    subset = subset.sort_values("date")
+    indicator_id = subset["indicator_id"].iloc[0]
+    indicator_label = indicator_label or indicator_id
+
+    fig, ax1 = plt.subplots(figsize=FIGSIZE)
+
+    color1 = "steelblue"
+    ax1.set_xlabel("Date")
+    ax1.set_ylabel(f"{sector} Sentiment", color=color1)
+    ax1.plot(subset["date"], subset["sentiment_mean"], color=color1, linewidth=1.5)
+    ax1.tick_params(axis="y", labelcolor=color1)
+
+    ax2 = ax1.twinx()
+    color2 = "firebrick"
+    ax2.set_ylabel(indicator_label, color=color2)
+    ax2.plot(
+        subset["date"],
+        subset["indicator_value"],
+        color=color2,
+        linewidth=1.5,
+        alpha=0.7,
+    )
+    ax2.tick_params(axis="y", labelcolor=color2)
+
+    ax1.set_title(f"{sector} Sentiment vs. {indicator_label}")
+    ax1.xaxis.set_major_locator(mdates.YearLocator())
+    ax1.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    plt.xticks(rotation=45)
+    fig.tight_layout()
+
+    safe_name = sector.lower().replace(" ", "_").replace("&", "and")
+    if save:
+        _save_fig(fig, f"sector_vs_{safe_name}.png")
+    return fig
+
+
+def plot_sector_predictive_grid(sector_merged_df, save=True):
+    """
+    Small multiples grid: each sector's sentiment vs. its matched indicator.
+
+    Parameters
+    ----------
+    sector_merged_df : pandas.core.frame.DataFrame
+        Output of prepare.align_sector_with_indicators().
+    save : bool
+
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+    """
+    sectors = sorted(sector_merged_df["sector"].unique())
+    n = len(sectors)
+    ncols = 3
+    nrows = (n + ncols - 1) // ncols
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=(5 * ncols, 3.5 * nrows))
+    axes = axes.flatten()
+
+    for i, sector in enumerate(sectors):
+        ax = axes[i]
+        subset = sector_merged_df[sector_merged_df["sector"] == sector].sort_values(
+            "date"
+        )
+        indicator_id = subset["indicator_id"].iloc[0]
+
+        color1 = "steelblue"
+        ax.plot(subset["date"], subset["sentiment_mean"], color=color1, linewidth=1)
+        ax.set_ylabel("Sentiment", color=color1, fontsize=8)
+        ax.tick_params(axis="y", labelcolor=color1, labelsize=7)
+
+        ax2 = ax.twinx()
+        color2 = "firebrick"
+        ax2.plot(
+            subset["date"],
+            subset["indicator_value"],
+            color=color2,
+            linewidth=1,
+            alpha=0.7,
+        )
+        ax2.set_ylabel(indicator_id, color=color2, fontsize=8)
+        ax2.tick_params(axis="y", labelcolor=color2, labelsize=7)
+
+        ax.set_title(sector, fontsize=10, fontweight="bold")
+        ax.xaxis.set_major_locator(mdates.YearLocator(3))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+        ax.tick_params(axis="x", labelsize=7, rotation=45)
+
+    for j in range(i + 1, len(axes)):
+        axes[j].set_visible(False)
+
+    fig.suptitle(
+        "Sector Sentiment vs. Matched Economic Indicators", fontsize=14, y=1.01
+    )
+    fig.tight_layout()
+
+    if save:
+        _save_fig(fig, "sector_predictive_grid.png")
+    return fig
+
+
 def _save_fig(fig, filename):
     """
     Save a matplotlib figure to the output directory.

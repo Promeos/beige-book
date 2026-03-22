@@ -111,6 +111,23 @@ for _district, _states in DISTRICT_STATES.items():
         if _state not in STATE_TO_DISTRICT:
             STATE_TO_DISTRICT[_state] = _district
 
+# Sector-specific FRED series — maps each Beige Book sector to a
+# matching national economic indicator for sector-level predictive analysis.
+# "General" is excluded (no clean match).
+SECTOR_FRED_SERIES = {
+    "Manufacturing": ("IPMAN", "Industrial Production: Manufacturing"),
+    "Employment": ("PAYEMS", "Total Nonfarm Payrolls"),
+    "Real Estate": ("HOUST", "Housing Starts"),
+    "Consumer Spending": ("RSAFS", "Advance Retail Sales"),
+    "Prices": ("CPIAUCSL", "CPI"),
+    "Energy": ("DCOILWTICO", "WTI Crude Oil Price"),
+    "Construction": ("TTLCONS", "Total Construction Spending"),
+    "Financial Services": ("BUSLOANS", "Commercial & Industrial Loans"),
+    "Transportation": ("TSIFRGHT", "TSI Freight Index"),
+    "Tourism & Hospitality": ("USLAH", "Leisure & Hospitality Employment"),
+    "Agriculture": ("WPU01", "PPI Farm Products"),
+}
+
 # Sentiment analysis
 CONFIDENCE_INTERVAL = 0.95
 ALPHA = 0.05

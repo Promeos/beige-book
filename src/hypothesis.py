@@ -149,6 +149,8 @@ def run_granger_tests(
 
     return results
 
+    return results
+
 
 def compute_regional_correlations(
     df, sentiment_col="vader_compound", indicator_col="coincident_index"
@@ -322,3 +324,125 @@ def compute_sector_district_correlations(
         )
 
     return pd.DataFrame(rows)
+
+
+def compute_sector_indicator_correlations(sector_merged_df, max_lag=3):
+    """
+    Compute lagged correlations between each sector's sentiment and its
+    matched FRED indicator.
+
+    Parameters
+    ----------
+    sector_merged_df : pandas.core.frame.DataFrame
+        Output of prepare.align_sector_with_indicators().
+        Columns: date, sector, sentiment_mean, indicator_value, indicator_id.
+    max_lag : int
+
+    Returns
+    -------
+    results : pandas.core.frame.DataFrame
+        Columns: sector, indicator_id, lag, pearson_r, pearson_p, spearman_r, spearman_p.
+    """
+    rows = []
+    print("\nSector-Indicator Lagged Correlations")
+    print("=" * 70)
+
+    for sector in sorted(sector_merged_df["sector"].unique()):
+        subset = sector_merged_df[sector_merged_df["sector"] == sector].sort_values(
+            "date"
+        )
+        indicator_id = subset["indicator_id"].iloc[0]
+
+        print(f"\n{sector} → {indicator_id}")
+        print("-" * 50)
+
+        for lag in range(max_lag + 1):
+            shifted = subset[["sentiment_mean", "indicator_value"]].copy()
+            shifted["indicator_value"] = shifted["indicator_value"].shift(-lag)
+            clean = shifted.dropna()
+
+            if len(clean) < 10:
+                continue
+
+            pr, pp = pearsonr(clean["sentiment_mean"], clean["indicator_value"])
+            sr, sp = spearmanr(clean["sentiment_mean"], clean["indicator_value"])
+
+            marker = "***" if pp < ALPHA else ""
+            print(
+                f"  Lag {lag}: Pearson r={pr:+.3f} (p={pp:.4f})  "
+                f"Spearman r={sr:+.3f} (p={sp:.4f}) {marker}"
+            )
+
+            rows.append(
+                {
+                    "sector": sector,
+                    "indicator_id": indicator_id,
+                    "lag": lag,
+                    "pearson_r": pr,
+                    "pearson_p": pp,
+                    "spearman_r": sr,
+                    "spearman_p": sp,
+                }
+            )
+
+    return pd.DataFrame(rows)
+
+
+def run_sector_granger_tests(sector_merged_df, max_lag=3):
+    """
+    Run Granger causality tests: does sector sentiment Granger-cause its
+    matched economic indicator?
+
+    Parameters
+    ----------
+    sector_merged_df : pandas.core.frame.DataFrame
+        Output of prepare.align_sector_with_indicators().
+    max_lag : int
+
+    Returns
+    -------
+    results : dict
+        results[sector][lag] = {f_stat, p_value, significant}.
+    """
+    results = {}
+
+    print("\nSector Granger Causality Tests")
+    print("=" * 70)
+
+    for sector in sorted(sector_merged_df["sector"].unique()):
+        subset = sector_merged_df[sector_merged_df["sector"] == sector].sort_values(
+            "date"
+        )
+        indicator_id = subset["indicator_id"].iloc[0]
+        pair = subset[["indicator_value", "sentiment_mean"]].dropna()
+
+        if len(pair) < max_lag + 10:
+            print(f"\n{sector} → {indicator_id}: insufficient data (n={len(pair)})")
+            continue
+
+        print(f"\n{sector} → {indicator_id} (n={len(pair)})")
+        print("-" * 50)
+
+        try:
+            test_result = grangercausalitytests(
+                pair.values, maxlag=max_lag, verbose=False
+            )
+        except Exception as e:
+            print(f"  Error: {e}")
+            continue
+
+        results[sector] = {}
+        for lag in range(1, max_lag + 1):
+            f_stat = test_result[lag][0]["ssr_ftest"][0]
+            p_value = test_result[lag][0]["ssr_ftest"][1]
+            significant = p_value < ALPHA
+
+            results[sector][lag] = {
+                "f_stat": f_stat,
+                "p_value": p_value,
+                "significant": significant,
+            }
+            marker = "***" if significant else ""
+            print(f"  Lag {lag}: F={f_stat:.3f}, p={p_value:.4f} {marker}")
+
+    return results

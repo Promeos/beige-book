@@ -5,12 +5,19 @@ Exposes core functions for data acquisition, preparation, sentiment
 scoring, visualization, and statistical testing.
 """
 
-from .acquire import get_beige_data, get_fred_data, get_regional_fred_data
+from .acquire import (
+    get_beige_data,
+    get_fred_data,
+    get_regional_fred_data,
+    get_sector_fred_data,
+)
 from .prepare import (
     prep_beige_data,
     align_time_periods,
     compute_national_aggregate,
     align_regional_data,
+    compute_sector_national_aggregate,
+    align_sector_with_indicators,
 )
 from .sentiment import add_sentiment_scores
 from .explore import (
@@ -25,6 +32,8 @@ from .explore import (
     plot_sector_timeseries,
     plot_sector_district_grid,
     plot_sector_volatility,
+    plot_sector_vs_indicator,
+    plot_sector_predictive_grid,
 )
 from .hypothesis import (
     evaluate_p_value,
@@ -33,7 +42,10 @@ from .hypothesis import (
     compute_regional_correlations,
     compute_sector_correlations,
     compute_sector_district_correlations,
+    compute_sector_indicator_correlations,
+    run_sector_granger_tests,
 )
+from .model import run_sector_regressions, sector_out_of_sample_test
 from .sectors import extract_sectors, score_sectors, build_sector_dataframe
 from .maps import (
     plot_sector_map,
@@ -75,4 +87,13 @@ __all__ = [
     "plot_sector_map_grid",
     "plot_dominant_sector_map",
     "plot_sector_map_animated",
+    "get_sector_fred_data",
+    "compute_sector_national_aggregate",
+    "align_sector_with_indicators",
+    "plot_sector_vs_indicator",
+    "plot_sector_predictive_grid",
+    "compute_sector_indicator_correlations",
+    "run_sector_granger_tests",
+    "run_sector_regressions",
+    "sector_out_of_sample_test",
 ]

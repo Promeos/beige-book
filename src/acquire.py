@@ -28,6 +28,7 @@ from src.config import (
     FRED_API_KEY,
     FRED_SERIES,
     REGIONAL_FRED_SERIES,
+    SECTOR_FRED_SERIES,
 )
 
 logger = logging.getLogger(__name__)
@@ -666,4 +667,83 @@ def fetch_regional_fred_data(start_date="2000-01-01", end_date=None):
 
     df = pd.DataFrame(rows)
     df["date"] = pd.to_datetime(df["date"])
+    return df
+
+
+# ---------------------------------------------------------------------------
+# Sector-specific FRED data
+# ---------------------------------------------------------------------------
+
+
+def get_sector_fred_data(use_cache=True):
+    """
+    Load sector-specific FRED indicators from cache or fetch.
+
+    Parameters
+    ----------
+    use_cache : bool
+
+    Returns
+    -------
+    df : pandas.core.frame.DataFrame
+        Wide-format DataFrame with date column and one column per sector indicator.
+    """
+    csv_path = DATA_DIR / "fred_sector_indicators.csv"
+    if use_cache and csv_path.exists():
+        logger.info("Loading cached sector FRED data from %s", csv_path)
+        return pd.read_csv(csv_path, parse_dates=["date"])
+
+    df = fetch_sector_fred_data()
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    df.to_csv(csv_path, index=False)
+    logger.info("Saved sector FRED data to %s (%d rows)", csv_path, len(df))
+    return df
+
+
+def fetch_sector_fred_data(start_date="2000-01-01", end_date=None):
+    """
+    Fetch sector-matched economic indicators from the FRED API.
+
+    Parameters
+    ----------
+    start_date : str
+    end_date : str
+
+    Returns
+    -------
+    df : pandas.core.frame.DataFrame
+        Wide-format with date column and one column per FRED series.
+    """
+    from fredapi import Fred
+
+    if not FRED_API_KEY:
+        raise ValueError("FRED_API_KEY not found. Add it to your .env file.")
+
+    fred = Fred(api_key=FRED_API_KEY)
+    end_date = end_date or datetime.now().strftime("%Y-%m-%d")
+
+    series_data = {}
+    for sector, (series_id, description) in SECTOR_FRED_SERIES.items():
+        logger.info("Fetching %s (%s) for sector: %s", series_id, description, sector)
+        try:
+            data = fred.get_series(series_id, start_date, end_date)
+            series_data[series_id] = data
+        except Exception as e:
+            logger.error("Failed to fetch %s (%s): %s", series_id, sector, e)
+
+    df = pd.DataFrame(series_data)
+    df.index.name = "date"
+
+    # Resample daily series to monthly (end of month)
+    daily_series = ["DCOILWTICO"]
+    for col in daily_series:
+        if col in df.columns:
+            monthly = df[col].dropna().resample("ME").last()
+            df = df.drop(columns=[col]).resample("ME").last()
+            df[col] = monthly
+            break
+    else:
+        df = df.resample("ME").last()
+
+    df = df.reset_index()
     return df

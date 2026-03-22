@@ -192,3 +192,84 @@ def align_regional_data(beige_df, regional_fred_df):
         return pd.DataFrame()
 
     return pd.concat(merged_parts, ignore_index=True)
+
+
+def compute_sector_national_aggregate(sector_df):
+    """
+    Compute national-level sentiment aggregates per (date, sector).
+
+    Parameters
+    ----------
+    sector_df : pandas.core.frame.DataFrame
+        Long-format with columns: date, district, sector, vader_compound.
+
+    Returns
+    -------
+    agg : pandas.core.frame.DataFrame
+        One row per (date, sector) with mean sentiment across districts.
+    """
+    agg = (
+        sector_df.groupby(["date", "sector"])["vader_compound"]
+        .mean()
+        .reset_index()
+        .rename(columns={"vader_compound": "sentiment_mean"})
+    )
+    return agg
+
+
+def align_sector_with_indicators(sector_agg_df, sector_fred_df):
+    """
+    Align sector-level sentiment with sector-matched FRED indicators.
+
+    For each sector, uses merge_asof(direction='forward') to map sentiment
+    at time T to the sector's matched indicator at T+1.
+
+    Parameters
+    ----------
+    sector_agg_df : pandas.core.frame.DataFrame
+        Output of compute_sector_national_aggregate().
+        Columns: date, sector, sentiment_mean.
+    sector_fred_df : pandas.core.frame.DataFrame
+        Wide-format FRED data with date column and one column per series.
+
+    Returns
+    -------
+    merged : pandas.core.frame.DataFrame
+        Long-format: date, sector, sentiment_mean, indicator_value, indicator_id.
+    """
+    from src.config import SECTOR_FRED_SERIES
+
+    sector_agg_df = sector_agg_df.copy()
+    sector_fred_df = sector_fred_df.copy()
+
+    sector_agg_df["date"] = pd.to_datetime(sector_agg_df["date"])
+    sector_fred_df["date"] = pd.to_datetime(sector_fred_df["date"])
+    sector_fred_df = sector_fred_df.sort_values("date")
+
+    merged_parts = []
+    for sector, (series_id, description) in SECTOR_FRED_SERIES.items():
+        if series_id not in sector_fred_df.columns:
+            continue
+
+        sector_slice = (
+            sector_agg_df[sector_agg_df["sector"] == sector].sort_values("date").copy()
+        )
+        if sector_slice.empty:
+            continue
+
+        indicator = sector_fred_df[["date", series_id]].dropna().copy()
+        indicator = indicator.rename(columns={series_id: "indicator_value"})
+
+        merged = pd.merge_asof(
+            sector_slice,
+            indicator,
+            on="date",
+            direction="forward",
+        )
+        merged["indicator_id"] = series_id
+        merged_parts.append(merged)
+
+    if not merged_parts:
+        return pd.DataFrame()
+
+    return pd.concat(merged_parts, ignore_index=True)

@@ -193,3 +193,157 @@ def _directional_accuracy(actual, predicted):
     if len(actual_dir) == 0:
         return 0.0
     return np.mean(actual_dir == pred_dir)
+
+
+def run_sector_regressions(sector_merged_df):
+    """
+    Run OLS regressions for each sector: does sector sentiment predict
+    its matched FRED indicator?
+
+    Parameters
+    ----------
+    sector_merged_df : pandas.core.frame.DataFrame
+        Columns: date, sector, sentiment_mean, indicator_value, indicator_id.
+
+    Returns
+    -------
+    results : dict
+        results[sector] = {"simple": model, "controlled": model_or_None}.
+    """
+    results = {}
+
+    print("\nSector OLS Regressions")
+    print("=" * 70)
+
+    for sector in sorted(sector_merged_df["sector"].unique()):
+        subset = sector_merged_df[sector_merged_df["sector"] == sector].copy()
+        subset = subset[["sentiment_mean", "indicator_value"]].dropna()
+
+        if len(subset) < 15:
+            print(f"\n{sector}: insufficient data (n={len(subset)})")
+            continue
+
+        indicator_id = sector_merged_df[sector_merged_df["sector"] == sector][
+            "indicator_id"
+        ].iloc[0]
+
+        print(f"\n{sector} → {indicator_id} (n={len(subset)})")
+        print("-" * 50)
+
+        # Simple model: indicator = α + β·sentiment
+        y = subset["indicator_value"]
+        X = sm.add_constant(subset[["sentiment_mean"]])
+        simple = sm.OLS(y, X).fit()
+
+        coef = simple.params.get("sentiment_mean", 0)
+        p = simple.pvalues.get("sentiment_mean", 1)
+        marker = "***" if p < 0.05 else ""
+        print(
+            f"  Simple:     β={coef:+.4f}, p={p:.4f}, R²={simple.rsquared:.3f} {marker}"
+        )
+
+        # Controlled model: indicator = α + β₁·sentiment + β₂·lag(indicator)
+        subset = subset.copy()
+        subset["indicator_lag"] = subset["indicator_value"].shift(1)
+        clean = subset.dropna()
+
+        controlled = None
+        if len(clean) >= 15:
+            y_c = clean["indicator_value"]
+            X_c = sm.add_constant(clean[["sentiment_mean", "indicator_lag"]])
+            controlled = sm.OLS(y_c, X_c).fit()
+
+            coef_c = controlled.params.get("sentiment_mean", 0)
+            p_c = controlled.pvalues.get("sentiment_mean", 1)
+            marker_c = "***" if p_c < 0.05 else ""
+            print(
+                f"  Controlled: β={coef_c:+.4f}, p={p_c:.4f}, "
+                f"R²={controlled.rsquared:.3f} {marker_c}"
+            )
+
+        results[sector] = {"simple": simple, "controlled": controlled}
+
+    return results
+
+
+def sector_out_of_sample_test(sector_merged_df, train_end="2018-12-31"):
+    """
+    Out-of-sample test for each sector: does adding sentiment improve
+    prediction over a lagged-indicator baseline?
+
+    Parameters
+    ----------
+    sector_merged_df : pandas.core.frame.DataFrame
+        Columns: date, sector, sentiment_mean, indicator_value.
+    train_end : str
+
+    Returns
+    -------
+    results : dict
+        results[sector] = {baseline: {rmse, mae}, sentiment_model: {rmse, mae}}.
+    """
+    results = {}
+
+    print(
+        "\nSector Out-of-Sample Tests (train ≤ {}, test > {})".format(
+            train_end, train_end
+        )
+    )
+    print("=" * 70)
+
+    for sector in sorted(sector_merged_df["sector"].unique()):
+        subset = sector_merged_df[sector_merged_df["sector"] == sector].copy()
+        subset = subset.sort_values("date")
+        subset["indicator_lag"] = subset["indicator_value"].shift(1)
+        subset = subset[
+            ["date", "sentiment_mean", "indicator_value", "indicator_lag"]
+        ].dropna()
+
+        train = subset[subset["date"] <= train_end]
+        test = subset[subset["date"] > train_end]
+
+        if len(train) < 15 or len(test) < 5:
+            continue
+
+        indicator_id = sector_merged_df[sector_merged_df["sector"] == sector][
+            "indicator_id"
+        ].iloc[0]
+
+        y_train = train["indicator_value"]
+        y_test = test["indicator_value"]
+
+        # Baseline: lagged indicator only
+        X_train_base = sm.add_constant(train[["indicator_lag"]])
+        X_test_base = sm.add_constant(test[["indicator_lag"]])
+        base_model = sm.OLS(y_train, X_train_base).fit()
+        pred_base = base_model.predict(X_test_base)
+
+        # Full: sentiment + lagged indicator
+        X_train_full = sm.add_constant(train[["sentiment_mean", "indicator_lag"]])
+        X_test_full = sm.add_constant(test[["sentiment_mean", "indicator_lag"]])
+        full_model = sm.OLS(y_train, X_train_full).fit()
+        pred_full = full_model.predict(X_test_full)
+
+        base_rmse = np.sqrt(mean_squared_error(y_test, pred_base))
+        full_rmse = np.sqrt(mean_squared_error(y_test, pred_full))
+        improvement = base_rmse - full_rmse
+
+        results[sector] = {
+            "baseline": {
+                "rmse": base_rmse,
+                "mae": mean_absolute_error(y_test, pred_base),
+            },
+            "sentiment_model": {
+                "rmse": full_rmse,
+                "mae": mean_absolute_error(y_test, pred_full),
+            },
+        }
+
+        marker = "✓" if improvement > 0 else "✗"
+        print(
+            f"  {sector:25s} → {indicator_id:15s}  "
+            f"Base RMSE={base_rmse:.4f}  Sent RMSE={full_rmse:.4f}  "
+            f"Δ={improvement:+.4f} {marker}"
+        )
+
+    return results
