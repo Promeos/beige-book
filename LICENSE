@@ -1,0 +1,34 @@
+Fair Use License
+
+Copyright (c) 2021-2026 Christopher Logan Ortiz
+
+Permission is hereby granted to any person obtaining a copy of this
+software and associated documentation files (the "Software"), to use
+the Software for personal, educational, and non-commercial research
+purposes, subject to the following conditions:
+
+1. Non-Commercial Use: The Software may not be used for commercial
+   purposes without prior written permission from the copyright holder.
+
+2. Attribution: Any use, reproduction, or distribution of the Software,
+   in whole or in part, must include proper attribution to the original
+   author and a link to the original repository.
+
+3. No Warranty: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+   WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+   ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+4. Redistribution: Redistribution of the Software, in original or
+   modified form, is permitted for non-commercial purposes only,
+   provided that this license notice is included in all copies or
+   substantial portions of the Software.
+
+5. Federal Reserve Data: The Beige Book text scraped by this software
+   is published by the Federal Reserve System and is in the public
+   domain. This license applies only to the original code and analysis,
+   not to the underlying Federal Reserve data.

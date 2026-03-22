@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Beige Book Sentiment Analysis"
+abstract: >-
+  A sentiment analysis pipeline that scrapes Federal Reserve Beige Book
+  regional economic summaries from the 12 district banks, scores sentiment
+  using VADER, and tests predictive power against real economic indicators
+  (GDP, unemployment, CPI, S&P 500) via Granger causality and OLS regression.
+type: software
+authors:
+  - family-names: Ortiz
+    given-names: Christopher Logan
+    email: christopher.logan.ortiz@gmail.com
+repository-code: "https://github.com/Promeos/beige-book"
+license: LicenseRef-FairUse
+keywords:
+  - sentiment-analysis
+  - federal-reserve
+  - beige-book
+  - economic-indicators
+  - nlp
+  - granger-causality
+date-released: "2021-04-05"
