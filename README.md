@@ -191,6 +191,20 @@ python run_pipeline.py
 - The **2019--2026 test period** includes COVID and rapid rate hikes, which may inflate apparent predictive power
 - **Time alignment** is approximate — Beige Book publication dates don't perfectly match indicator release dates
 
+## Related Works
+
+**Beige Book Analysis:**
+
+- Armesto, M. T., Hernandez-Murillo, R., Owyang, M. T., & Piger, J. (2009). Measuring the Information Content of the Beige Book: A Mixed Data Sampling Approach. *Journal of Money, Credit and Banking*, 41, 35--55. [doi:10.1111/j.1538-4616.2008.00187.x](https://doi.org/10.1111/j.1538-4616.2008.00187.x)
+- Balke, N. S., Yucel, M. K., & Zhang, R. (2017). Incorporating the Beige Book into a Quantitative Index of Economic Activity. *Journal of Forecasting*, 36, 497--514. [doi:10.1002/for.2450](https://doi.org/10.1002/for.2450)
+- Espel, T. J. (2024). Sentiment Analysis with Large Language Models Applied to the Federal Reserve Beige Book. Preprint.
+
+**Sentiment Models:**
+
+- Hutto, C. J. & Gilbert, E. (2014). VADER: A Parsimonious Rule-Based Model for Sentiment Analysis of Social Media Text. *Proceedings of ICWSM*, 8, 216--225. [ojs.aaai.org](https://ojs.aaai.org/index.php/ICWSM/article/view/14550)
+- Huang, A. H., Wang, H., & Yang, Y. (2023). FinBERT: A Large Language Model for Extracting Information from Financial Text. *Contemporary Accounting Research*, 40(2), 806--841. [doi:10.1111/1911-3846.12832](https://doi.org/10.1111/1911-3846.12832)
+- Shah, A., Paturi, S., & Chava, S. (2023). Trillion Dollar Words: A New Financial Dataset, Task & Market Analysis. *Proceedings of ACL*, 6664--6679. [doi:10.18653/v1/2023.acl-long.368](https://doi.org/10.18653/v1/2023.acl-long.368)
+
 ## Future Work
 
 - **Sector-gated sentiment** — score each sector paragraph independently per district, then correlate sector-specific sentiment with corresponding economic indicators (e.g., Manufacturing sentiment vs. industrial production). The 10,728 sector-level paragraphs are scraped and ready for scoring.
