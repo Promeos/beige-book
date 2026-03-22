@@ -108,6 +108,8 @@ beige_book/
 
 ## Setup
 
+**Requirements:** Python 3.9+
+
 ### 1. Install dependencies
 
 ```bash

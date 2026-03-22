@@ -11,6 +11,7 @@ authors:
   - family-names: Ortiz
     given-names: Christopher Logan
     email: christopher.logan.ortiz@gmail.com
+version: "1.0.0"
 repository-code: "https://github.com/Promeos/beige-book"
 license: LicenseRef-FairUse
 keywords:
@@ -20,4 +21,4 @@ keywords:
   - economic-indicators
   - nlp
   - granger-causality
-date-released: "2021-04-05"
+date-released: "2026-03-22"
