@@ -312,3 +312,86 @@ def build_sector_dataframe(df, text_col="summary"):
     sector_df = sector_df[[c for c in col_order if c in sector_df.columns]]
     sector_df["date"] = pd.to_datetime(sector_df["date"])
     return sector_df.sort_values(["date", "district", "sector"]).reset_index(drop=True)
+
+
+def build_sentence_sector_dataframe(df, text_col="summary"):
+    """
+    Score each sentence independently and tag it with its sector.
+
+    Unlike build_sector_dataframe() which concatenates sentences per sector
+    then scores the block, this function scores each sentence individually
+    before sector assignment — eliminating within-paragraph signal cancellation.
+
+    Parameters
+    ----------
+    df : pandas.core.frame.DataFrame
+        Must contain columns: date, district, and the text column.
+    text_col : str
+
+    Returns
+    -------
+    sentence_df : pandas.core.frame.DataFrame
+        One row per sentence with columns: date, district, sector, sentence,
+        vader_compound, vader_pos, vader_neg, vader_neu.
+    """
+    rows = []
+    for _, row in df.iterrows():
+        text = row[text_col]
+        if not isinstance(text, str) or not text.strip():
+            continue
+
+        sentences = _split_sentences(text)
+        for sent in sentences:
+            sectors = _classify_sentence(sent)
+            sector = sectors[0] if sectors else "General"
+            scores = _analyzer.polarity_scores(sent)
+
+            rows.append(
+                {
+                    "date": row["date"],
+                    "district": row["district"],
+                    "sector": sector,
+                    "sentence": sent,
+                    "vader_compound": scores["compound"],
+                    "vader_pos": scores["pos"],
+                    "vader_neg": scores["neg"],
+                    "vader_neu": scores["neu"],
+                }
+            )
+
+    sentence_df = pd.DataFrame(rows)
+    sentence_df["date"] = pd.to_datetime(sentence_df["date"])
+    return sentence_df.sort_values(["date", "district", "sector"]).reset_index(
+        drop=True
+    )
+
+
+def aggregate_sentence_sector_scores(sentence_df):
+    """
+    Aggregate sentence-level sector scores to (date, district, sector).
+
+    Output matches the shape of sector_sentiment.csv so all downstream
+    functions (compute_sector_national_aggregate, align_sector_with_indicators,
+    Granger tests, OLS, plots) work unchanged.
+
+    Parameters
+    ----------
+    sentence_df : pandas.core.frame.DataFrame
+        Output of build_sentence_sector_dataframe().
+
+    Returns
+    -------
+    agg_df : pandas.core.frame.DataFrame
+        Columns: date, district, sector, vader_compound, sentence_count, vader_std.
+    """
+    agg = (
+        sentence_df.groupby(["date", "district", "sector"])
+        .agg(
+            vader_compound=("vader_compound", "mean"),
+            sentence_count=("vader_compound", "count"),
+            vader_std=("vader_compound", "std"),
+        )
+        .reset_index()
+    )
+    agg["vader_std"] = agg["vader_std"].fillna(0)
+    return agg.sort_values(["date", "district", "sector"]).reset_index(drop=True)

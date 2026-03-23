@@ -46,7 +46,13 @@ from .hypothesis import (
     run_sector_granger_tests,
 )
 from .model import run_sector_regressions, sector_out_of_sample_test
-from .sectors import extract_sectors, score_sectors, build_sector_dataframe
+from .sectors import (
+    extract_sectors,
+    score_sectors,
+    build_sector_dataframe,
+    build_sentence_sector_dataframe,
+    aggregate_sentence_sector_scores,
+)
 from .maps import (
     plot_sector_map,
     plot_sector_map_grid,
@@ -96,4 +102,6 @@ __all__ = [
     "run_sector_granger_tests",
     "run_sector_regressions",
     "sector_out_of_sample_test",
+    "build_sentence_sector_dataframe",
+    "aggregate_sentence_sector_scores",
 ]

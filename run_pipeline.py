@@ -185,8 +185,38 @@ def main():
     else:
         logger.warning("No sector_sentiment.csv found. Skipping sector analysis.")
 
-    # ---- Step 9: Robustness checks ----
-    logger.info("Step 9: Running robustness checks...")
+    # ---- Step 9: Sector-gated sentiment (sentence-level) ----
+    logger.info("Step 9: Sector-gated sentiment scoring...")
+
+    from src.sectors import (
+        build_sentence_sector_dataframe,
+        aggregate_sentence_sector_scores,
+    )
+
+    sentence_sector_df = build_sentence_sector_dataframe(beige_df)
+    gated_df = aggregate_sentence_sector_scores(sentence_sector_df)
+
+    sentence_sector_df.to_csv(DATA_DIR / "sector_sentence_detail.csv", index=False)
+    gated_df.to_csv(DATA_DIR / "sector_sentiment_gated.csv", index=False)
+    logger.info(
+        "Sentence-gated: %d sentences → %d aggregated rows",
+        len(sentence_sector_df),
+        len(gated_df),
+    )
+
+    # Compare gated vs paragraph-level predictive power
+    if sector_csv.exists():
+        gated_national = compute_sector_national_aggregate(gated_df)
+        gated_merged = align_sector_with_indicators(gated_national, sector_fred_df)
+
+        if not gated_merged.empty:
+            print("\n" + "=" * 60)
+            print("SENTENCE-GATED SECTOR CORRELATIONS")
+            print("=" * 60)
+            compute_sector_indicator_correlations(gated_merged)
+
+    # ---- Step 10: Robustness checks ----
+    logger.info("Step 10: Running robustness checks...")
 
     from src.robustness import run_all_robustness_checks, run_sector_fdr_correction
 
