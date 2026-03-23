@@ -31,7 +31,7 @@ BASE_URL = "https://www.federalreserve.gov"
 INDEX_URL = BASE_URL + "/monetarypolicy/beigebook{year}.htm"
 SCRAPE_DELAY = 5  # seconds between requests
 REQUEST_HEADERS = {"User-Agent": "BeigeBookResearch/1.0"}
-START_YEAR = 2011
+START_YEAR = 1996
 END_YEAR = 2026
 
 # The 12 Federal Reserve district banks (canonical short names)
@@ -53,6 +53,7 @@ DISTRICTS = [
 # District name normalization mapping
 # Maps variations found in Beige Book HTML to canonical short names
 DISTRICT_ALIASES = {
+    # Full bank name format (2017+)
     "Federal Reserve Bank of Boston": "Boston",
     "Federal Reserve Bank of New York": "New York",
     "Federal Reserve Bank of Philadelphia": "Philadelphia",
@@ -65,6 +66,35 @@ DISTRICT_ALIASES = {
     "Federal Reserve Bank of Kansas City": "Kansas City",
     "Federal Reserve Bank of Dallas": "Dallas",
     "Federal Reserve Bank of San Francisco": "San Francisco",
+    # Ordinal format (2011-2016)
+    "First District--Boston": "Boston",
+    "Second District--New York": "New York",
+    "Third District--Philadelphia": "Philadelphia",
+    "Fourth District--Cleveland": "Cleveland",
+    "Fifth District--Richmond": "Richmond",
+    "Sixth District--Atlanta": "Atlanta",
+    "Seventh District--Chicago": "Chicago",
+    "Eighth District--St. Louis": "St. Louis",
+    "Ninth District--Minneapolis": "Minneapolis",
+    "Tenth District--Kansas City": "Kansas City",
+    "Eleventh District--Dallas": "Dallas",
+    "Twelfth District--San Francisco": "San Francisco",
+}
+
+# District number to canonical name (for 1996-2010 separate page format)
+DISTRICT_NUMBER_MAP = {
+    1: "Boston",
+    2: "New York",
+    3: "Philadelphia",
+    4: "Cleveland",
+    5: "Richmond",
+    6: "Atlanta",
+    7: "Chicago",
+    8: "St. Louis",
+    9: "Minneapolis",
+    10: "Kansas City",
+    11: "Dallas",
+    12: "San Francisco",
 }
 
 # Regional FRED series — State Coincident Economic Activity Index

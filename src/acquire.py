@@ -94,11 +94,16 @@ def scrape_beige_books(start_year=None, end_year=None):
     rows = []
     for url in report_urls:
         report_date = _parse_date_from_url(url)
-        html = _fetch_html(url)
-        if html is None:
-            continue
 
-        districts = _extract_district_summaries(html)
+        # Old format (1996-2010): districts on separate pages
+        if "/fomc/beigebook/" in url:
+            districts = _extract_old_format_districts(url)
+        else:
+            html = _fetch_html(url)
+            if html is None:
+                continue
+            districts = _extract_district_summaries(html)
+
         if not districts:
             logger.warning("No district summaries found for %s (%s)", report_date, url)
             continue
@@ -157,8 +162,16 @@ def _collect_report_urls(start_year, end_year):
             # Fallback: some years use different link text
             paths = sel.xpath('//a[contains(@href, "beigebook")]/@href').getall()
 
-        # Filter to individual reports for this year (have YYYY pattern)
+        # Filter to individual reports for this year
+        # New format (2011+): beigebook202001.htm or beigebook202001-summary.htm
         year_paths = [p for p in paths if re.search(rf"beigebook{year}\d{{2}}", p)]
+
+        # Old format (1996-2010): /fomc/beigebook/2005/20050601/default.htm
+        if not year_paths:
+            old_paths = [
+                p for p in paths if re.search(rf"/fomc/beigebook/{year}/\d{{8}}/", p)
+            ]
+            year_paths = old_paths
 
         for path in year_paths:
             full_url = BASE_URL + path if path.startswith("/") else path
@@ -201,13 +214,162 @@ def _extract_district_summaries(html):
     if len(results) >= 10:
         return results
 
-    # Strategy 3: Try h3 headings (some older reports)
+    # Strategy 3: 2011-2016 format — h2 tags with "First District--Boston" names
+    results = _extract_h2_format(sel)
+    if len(results) >= 10:
+        return results
+
+    # Strategy 4: Try h3 headings (some older reports)
     results = _extract_with_heading_tag(sel, "h3")
     if results:
         return results
 
-    # Strategy 4: BeautifulSoup fallback for unusual formats
+    # Strategy 5: BeautifulSoup fallback for unusual formats
     results = _extract_bs4_fallback(clean_html)
+    return results
+
+
+def _extract_old_format_districts(report_url):
+    """
+    Extract district summaries from 1996-2010 format where each district
+    is on a separate page (1.htm through 12.htm).
+
+    Parameters
+    ----------
+    report_url : str
+        URL of the report's default.htm page.
+
+    Returns
+    -------
+    results : list of (str, str)
+        Pairs of (district_name, summary_text).
+    """
+    from src.config import DISTRICT_NUMBER_MAP
+
+    # Build base URL: /fomc/beigebook/2005/20050601/
+    base_url = report_url.rsplit("/", 1)[0] + "/"
+
+    results = []
+    for num in range(1, 13):
+        district_url = base_url + f"{num}.htm"
+        html = _fetch_html(district_url)
+        if html is None:
+            logger.warning("Failed to fetch district %d: %s", num, district_url)
+            continue
+
+        summary = _extract_old_district_page(html)
+        if summary:
+            district_name = DISTRICT_NUMBER_MAP[num]
+            results.append((district_name, summary))
+
+    return results
+
+
+def _extract_old_district_page(html):
+    """
+    Extract the economic summary from a single old-format district page.
+
+    Old pages (1996-2010) have content after an <a name="content"> anchor.
+    The first <p> after this anchor is the general economic summary.
+
+    Parameters
+    ----------
+    html : str
+
+    Returns
+    -------
+    summary : str
+    """
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Strategy 1: Find content after <a name="content"> anchor
+    content_anchor = soup.find("a", attrs={"name": "content"})
+    if content_anchor:
+        # Get the parent cell, then find paragraphs within it
+        parent = content_anchor.parent
+        if parent:
+            paragraphs = parent.find_all("p")
+            for p in paragraphs:
+                text = p.get_text(strip=True).replace("\n", " ")
+                # Skip short nav-like text
+                if len(text) < 50:
+                    continue
+                # Skip section headings (bold-only paragraphs)
+                if p.find("strong") and not p.find(string=True, recursive=False):
+                    continue
+                return text
+
+    # Strategy 2: Fallback — find first substantial <p> outside navigation
+    paragraphs = soup.find_all("p")
+    for p in paragraphs:
+        text = p.get_text(strip=True).replace("\n", " ")
+        if len(text) < 100:
+            continue
+        # Skip navigation and header text
+        if any(
+            skip in text
+            for skip in [
+                "Return to",
+                "Home |",
+                "Full Report",
+                "Federal Reserve Districts",
+                "Skip to content",
+            ]
+        ):
+            continue
+        return text
+
+    return ""
+
+
+def _extract_h2_format(sel):
+    """
+    Extract district summaries from 2011-2016 format where districts
+    are h2 tags like "First District--Boston".
+
+    Parameters
+    ----------
+    sel : scrapy.Selector
+
+    Returns
+    -------
+    results : list of (str, str)
+    """
+    district_names = sel.xpath("//h2/text()").getall()
+    if not district_names:
+        return []
+
+    results = []
+    seen_districts = set()
+
+    for name in district_names:
+        name_clean = name.strip()
+        if not name_clean:
+            continue
+
+        if not _is_district_name(name_clean):
+            continue
+
+        # Skip section headers
+        if "Highlights" in name_clean or name_clean == "District":
+            continue
+
+        canonical = _normalize_district(name_clean)
+        if canonical in seen_districts:
+            continue
+        seen_districts.add(canonical)
+
+        escaped_name = name_clean.replace('"', '\\"')
+
+        # Grab the first paragraph after this h2
+        first_p = sel.xpath(
+            f'.//h2[contains(text(), "{escaped_name}")]/following-sibling::p[1]/text()'
+        ).getall()
+        summary = " ".join(s.replace("\n", " ").strip() for s in first_p if s.strip())
+
+        if summary:
+            results.append((name_clean, summary))
+
     return results
 
 
@@ -476,11 +638,18 @@ def _parse_date_from_url(url):
     str
         Date string in YYYY-MM-DD format.
     """
-    # Handles both old (beigebook202001.htm) and new (beigebook202601-summary.htm) formats
+    # New format (2011+): beigebook202001.htm or beigebook202601-summary.htm
     match = re.search(r"beigebook(\d{4})(\d{2})", url)
     if match:
         year, month = match.groups()
         return f"{year}-{month}-01"
+
+    # Old format (1996-2010): /fomc/beigebook/2005/20050601/default.htm
+    match = re.search(r"/(\d{4})(\d{2})(\d{2})/", url)
+    if match:
+        year, month, day = match.groups()
+        return f"{year}-{month}-{day}"
+
     return None
 
 
@@ -498,7 +667,13 @@ def _fetch_html(url, use_cache=True):
     html : str or None
     """
     # Build a cache filename from the URL
-    cache_name = url.split("/")[-1]
+    # Old-format URLs like /fomc/beigebook/2005/20050601/1.htm need unique names
+    if "/fomc/beigebook/" in url:
+        # e.g., "fomc_beigebook_2005_20050601_1.htm"
+        parts = url.split("/fomc/beigebook/")[-1]
+        cache_name = "fomc_beigebook_" + parts.replace("/", "_")
+    else:
+        cache_name = url.split("/")[-1]
     cache_path = RAW_HTML_DIR / cache_name
 
     if use_cache and cache_path.exists():
@@ -551,7 +726,7 @@ def get_fred_data(use_cache=True):
     return df
 
 
-def fetch_fred_data(start_date="2000-01-01", end_date=None):
+def fetch_fred_data(start_date="1995-01-01", end_date=None):
     """
     Fetch economic indicator time series from the FRED API.
 
