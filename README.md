@@ -34,7 +34,7 @@ Beige Book sentiment **Granger-causes GDP** at lags 1--2, though the limited num
 
 ### Three-Model Sentiment Comparison
 
-We evaluated three sentiment models head-to-head across all 12 districts to determine which best captures economically relevant variation in Beige Book text:
+We evaluated three sentiment models head-to-head across all 12 districts (2011--2026 subset, where all three models have been scored) to determine which best captures economically relevant variation in Beige Book text:
 
 | Model | Type | Training Data | Districts Won |
 |-------|------|---------------|---------------|
@@ -53,7 +53,7 @@ FinBERT-FOMC underperforms everywhere because it was trained to detect *policy s
 
 ### Regional Analysis
 
-Not all districts contribute equally to aggregate predictive power. We tested each district's VADER sentiment against the Philadelphia Fed's Coincident Economic Activity Index for its primary state:
+Not all districts contribute equally to aggregate predictive power. We tested each district's VADER sentiment (2011--2026 subset) against the Philadelphia Fed's Coincident Economic Activity Index for its primary state:
 
 ![Regional Predictive Power by Federal Reserve District](output/regional_correlation_bars.png)
 
@@ -71,7 +71,7 @@ Diversified economies (Chicago, Dallas, Atlanta) show weaker or insignificant co
 
 ### Sector-Specific Predictive Analysis
 
-Each Beige Book report is structured around economic sectors (Manufacturing, Employment, Real Estate, etc.). We scraped 10,728 sector-level paragraphs directly from the HTML structure, scored each with VADER, and matched sector sentiment to corresponding national FRED indicators. This enables a more targeted test: does what the Fed hears about manufacturing predict industrial production? Does employment commentary predict payrolls?
+Each Beige Book report is structured around economic sectors (Manufacturing, Employment, Real Estate, etc.). We scraped 10,728 sector-level paragraphs from the 2011--2026 reports (which have consistent sector headings in the HTML), scored each with VADER, and matched sector sentiment to corresponding national FRED indicators. This enables a more targeted test: does what the Fed hears about manufacturing predict industrial production? Does employment commentary predict payrolls?
 
 ![Sector Sentiment Heatmap](output/sector_heatmap.png)
 
