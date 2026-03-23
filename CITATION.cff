@@ -13,7 +13,6 @@ authors:
     email: christopher.logan.ortiz@gmail.com
 version: "1.0.0"
 repository-code: "https://github.com/Promeos/beige-book"
-license: LicenseRef-FairUse
 keywords:
   - sentiment-analysis
   - federal-reserve
