@@ -257,6 +257,32 @@ We re-run the out-of-sample evaluation excluding the COVID period (March 2020 --
 
 Both unemployment and CPI show improvement even after removing the COVID shock from the test set. The S&P 500 model degrades, consistent with no genuine predictive signal.
 
+### Split-Sample Stability (Pre-2011 vs. Post-2011)
+
+The U.S. economy shifted structurally over the 30-year sample: manufacturing's GDP share fell from ~16% to ~11%, services expanded, offshoring accelerated after China's 2001 WTO accession, and the Fed adopted forward guidance post-2008. To test whether the sentiment-unemployment relationship is stable across these regimes, we split the sample at 2011:
+
+**First-differenced correlations (Δsentiment vs. Δunemployment):**
+
+| Period | r | p-value | n |
+|--------|---|---------|---|
+| Pre-2011 (1996--2010) | -0.05 | 0.62 | 112 |
+| Post-2011 (2011--2026) | **-0.70** | < 0.0001 | 119 |
+| Full sample | -0.57 | < 0.0001 | 232 |
+
+**First-differenced Granger causality (Δsentiment → Δunemployment):**
+
+| Period | Significant Lags | Best p-value |
+|--------|-----------------|-------------|
+| Pre-2011 (1996--2010) | **Lags 2--4** | 0.002 |
+| Post-2011 (2011--2026) | **Lags 2--4** | 0.0001 |
+| Full sample | Lags 2--4 | 0.001 |
+
+The contemporaneous correlation is driven almost entirely by the post-2011 period, where extreme events (the 2008 aftermath, COVID, rate hikes) produced synchronized swings in sentiment and unemployment. In the calmer pre-2011 period, the contemporaneous correlation is near zero.
+
+However, the **Granger causality holds in both eras** (p = 0.002 pre-2011, p = 0.0001 post-2011), confirming that sentiment *predicts* unemployment changes at 2--4 report lags regardless of the structural regime. The pre-2011 relationship is predictive rather than contemporaneous -- sentiment leads unemployment by 3--6 months, but the movements are smaller and do not produce a strong lag-0 correlation.
+
+CPI shows a similar pattern: weak contemporaneous correlation in both sub-periods, but Granger significance in both (lag 1 pre-2011, lags 2--3 post-2011).
+
 ### Multiple Testing Correction (Benjamini-Hochberg)
 
 The sector-district analysis tests 136 correlations. Without correction, 43 appear significant at alpha = 0.05. After Benjamini-Hochberg FDR correction, **26 survive** -- 17 false discoveries avoided.
