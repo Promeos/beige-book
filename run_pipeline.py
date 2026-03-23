@@ -185,6 +185,28 @@ def main():
     else:
         logger.warning("No sector_sentiment.csv found. Skipping sector analysis.")
 
+    # ---- Step 9: Robustness checks ----
+    logger.info("Step 9: Running robustness checks...")
+
+    from src.robustness import run_all_robustness_checks, run_sector_fdr_correction
+
+    run_all_robustness_checks(merged_df)
+
+    # FDR correction on sector-district correlations (if regional data available)
+    if sector_csv.exists():
+        from src.hypothesis import compute_sector_district_correlations
+        from src.acquire import get_regional_fred_data
+        from src.prepare import align_regional_data
+
+        regional_fred_df = get_regional_fred_data()
+        regional_merged = align_regional_data(beige_df, regional_fred_df)
+        if not regional_merged.empty:
+            sector_district_corr = compute_sector_district_correlations(
+                sector_df, regional_merged
+            )
+            if not sector_district_corr.empty:
+                run_sector_fdr_correction(sector_district_corr)
+
     logger.info("Pipeline complete!")
 
 
