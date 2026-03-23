@@ -154,7 +154,7 @@ FRED_API_KEY=your_key_here
 python run_pipeline.py
 ```
 
-The pipeline runs nine steps sequentially: data acquisition (scraping + FRED API), text preparation, sentiment scoring, national aggregation, visualization, lagged correlation and Granger tests, OLS regression with out-of-sample evaluation, sector-specific predictive analysis, and robustness checks.
+The pipeline runs ten steps sequentially: data acquisition (scraping + FRED API), text preparation, sentiment scoring, national aggregation, visualization, lagged correlation and Granger tests, OLS regression with out-of-sample evaluation, sector-specific predictive analysis, sentence-level sector-gated scoring, and robustness checks.
 
 ## Pipeline Steps
 
@@ -168,7 +168,8 @@ The pipeline runs nine steps sequentially: data acquisition (scraping + FRED API
 | 6. Hypothesis | `src/hypothesis.py` | Runs lagged Pearson/Spearman correlations and Granger causality tests (up to 4 lags) |
 | 7. Model | `src/model.py` | Fits OLS regressions (simple and controlled) and runs out-of-sample tests (train through 2018, test 2019+) |
 | 8. Sectors | `src/hypothesis.py`, `src/model.py` | Sector-indicator correlations, Granger tests, OLS, and out-of-sample evaluation for 11 sector-FRED pairs |
-| 9. Robustness | `src/robustness.py` | ADF unit root tests, first-differenced correlations and Granger tests, exclude-COVID out-of-sample, Benjamini-Hochberg FDR correction |
+| 9. Sector-Gated | `src/sectors.py` | Sentence-level sector classification and scoring, compared against paragraph-level approach |
+| 10. Robustness | `src/robustness.py` | ADF unit root tests, first-differenced correlations and Granger tests, exclude-COVID out-of-sample, split-sample stability, Benjamini-Hochberg FDR correction |
 
 ## Output
 
@@ -204,7 +205,7 @@ Several caveats temper the conclusions drawn above.
 
 **Sentiment measurement.** VADER is a general-purpose lexicon not calibrated for economic language. The word "moderate," which carries positive valence in VADER's dictionary, is essentially neutral in Fed-speak ("moderate growth" simply means growth near trend). While VADER's positive bias happens to align with the Beige Book's optimistic baseline -- making deviations informative -- a purpose-built economic sentiment lexicon could improve signal extraction. The three-model comparison confirms that no off-the-shelf model is ideal for this text.
 
-**Sample period and structural breaks.** The 2019--2026 out-of-sample test window includes COVID-19 (an unprecedented economic shock) and the most aggressive rate-hiking cycle in four decades. Both events produced extreme sentiment swings that may inflate apparent predictive power. The unemployment result (r = -0.59) is robust across sub-periods, but the CPI result is driven substantially by the 2021--2023 inflation episode. A longer historical sample (pre-2011) would provide additional economic cycles for validation, though earlier Beige Book HTML structures differ and require separate scraping logic.
+**Sample period and structural breaks.** The 2019--2026 out-of-sample test window includes COVID-19 (an unprecedented economic shock) and the most aggressive rate-hiking cycle in four decades. Both events produced extreme sentiment swings that may inflate apparent predictive power. The split-sample analysis (see Robustness Checks) shows that the contemporaneous unemployment correlation is driven by the post-2011 period, though Granger causality holds in both eras. The CPI result is driven substantially by the 2021--2023 inflation episode. The 1996--2010 extension adds two additional recessions for validation but also introduces structural differences in the economy and in the Beige Book's own format.
 
 **Time alignment.** The `merge_asof(direction='forward')` approach maps each Beige Book to the next available indicator observation. This is conservative (it prevents look-ahead bias), but the actual information lag varies: a Beige Book published on January 18 may map to January unemployment (released in February) or February unemployment, depending on publication timing. This imprecision adds noise but should not introduce systematic bias.
 
@@ -315,6 +316,6 @@ Top sector-district pairs surviving FDR:
 
 - **Custom Beige Book sentiment model.** Train a classifier on Beige Book text with economic outcome labels. Three off-the-shelf models have been benchmarked; a domain-specific model trained on this corpus could outperform all three.
 - **GDP-weighted district aggregation.** Weight constituent states by GDP or employment share for more accurate national sentiment measures.
-- **Extended historical coverage.** Scrape back to 1996 (when the Beige Book moved online) to capture the dot-com bust, the 2001 recession, and the full 2008 financial crisis.
+- **Pre-1996 historical coverage.** The Fed website archive begins in 1996. Earlier Beige Books (1970--1995) may be available in PDF form from individual district bank archives, which would add five more recessions to the sample.
 - **Real-time forecasting evaluation.** Test predictive accuracy using only information available at each publication date, simulating the perspective of a contemporary reader.
 - **Interactive dashboard.** Build a browser-based tool for browsing district and sector sentiment over time.
