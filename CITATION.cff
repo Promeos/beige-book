@@ -12,6 +12,7 @@ authors:
     given-names: Christopher Logan
     email: christopher.logan.ortiz@gmail.com
 version: "1.0.0"
+doi: "10.5281/zenodo.19187747"
 repository-code: "https://github.com/Promeos/beige-book"
 keywords:
   - sentiment-analysis
