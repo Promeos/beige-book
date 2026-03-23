@@ -1,12 +1,12 @@
 # Does the Federal Reserve's Beige Book Predict the Economy?
 
-A quantitative study of whether narrative economic intelligence from the 12 Federal Reserve district banks contains leading information for macroeconomic indicators. Covers 1,464 district-level summaries and 10,728 sector-level paragraphs across 122 Beige Book reports (2011--2026).
+A quantitative study of whether narrative economic intelligence from the 12 Federal Reserve district banks contains leading information for macroeconomic indicators. Covers 2,820 district-level summaries and 10,728 sector-level paragraphs across 235 Beige Book reports (1996--2026), spanning three recessions (2001, 2008, 2020).
 
 ## Overview
 
 Eight times per year, the Federal Reserve publishes its Summary of Commentary on Current Economic Conditions -- the Beige Book. Each of the 12 district banks compiles qualitative assessments from business contacts, bankers, and labor market participants within its region. These narratives are widely read by market participants and policymakers, yet their informational content remains difficult to quantify. If the Beige Book captures real-time economic conditions through the eyes of front-line decision-makers, its tone should contain leading information for hard economic data released weeks or months later.
 
-This project tests that hypothesis directly. We scrape the full text of every district-level Beige Book summary published between 2011 and 2026, score each using VADER sentiment analysis (validated against two transformer-based alternatives), and assess predictive power for four national economic indicators:
+This project tests that hypothesis directly. We scrape the full text of every district-level Beige Book summary published between 1996 and 2026 — covering 30 years that include the dot-com bust, the 2008 financial crisis, and COVID-19 — score each using VADER sentiment analysis (validated against two transformer-based alternatives), and assess predictive power for four national economic indicators:
 
 | FRED Series | Indicator | Frequency |
 |-------------|-----------|-----------|
@@ -160,7 +160,7 @@ The pipeline runs nine steps sequentially: data acquisition (scraping + FRED API
 
 | Step | Module | Description |
 |------|--------|-------------|
-| 1. Acquire | `src/acquire.py` | Scrapes Beige Book reports from federalreserve.gov (2011--2026) and fetches indicator series from the FRED API |
+| 1. Acquire | `src/acquire.py` | Scrapes Beige Book reports from federalreserve.gov (1996--2026) and fetches indicator series from the FRED API |
 | 2. Prepare | `src/prepare.py` | Cleans text, normalizes district names, and aligns Beige Book dates to FRED reporting periods via `merge_asof(direction='forward')` |
 | 3. Sentiment | `src/sentiment.py` | Scores each district summary with VADER compound sentiment |
 | 4. Aggregate | `src/prepare.py` | Computes national sentiment aggregates (mean and standard deviation across 12 districts) and merges with FRED data |
@@ -216,7 +216,7 @@ Several caveats temper the conclusions drawn above.
 
 ## Robustness Checks
 
-We run four robustness checks to address common confounds in economic text analysis. The full suite is implemented in `src/robustness.py` and executes as Step 9 of the pipeline.
+We run four robustness checks to address common confounds in economic text analysis. The full suite is implemented in `src/robustness.py` and executes as Step 10 of the pipeline. All results below are from the full 1996--2026 sample (235 reports, n = 232 after alignment).
 
 ### Unit Root Tests (ADF)
 
@@ -224,26 +224,26 @@ Augmented Dickey-Fuller tests determine whether each series is stationary. Corre
 
 | Series | ADF Statistic | p-value | Stationary? |
 |--------|--------------|---------|-------------|
-| Sentiment (mean) | -3.215 | 0.019 | Yes |
-| Unemployment | -3.346 | 0.013 | Yes |
-| GDP | +0.176 | 0.971 | No |
-| CPI | +2.022 | 0.999 | No |
+| Sentiment (mean) | -4.388 | 0.0003 | Yes |
+| Unemployment | -2.539 | 0.106 | No (borderline) |
+| GDP | -0.674 | 0.853 | No |
+| CPI | +2.448 | 0.999 | No |
 | S&P 500 | +0.494 | 0.985 | No |
 
-Sentiment and unemployment are both I(0), so level-based correlations between them are valid. GDP, CPI, and S&P 500 are I(1), meaning level-based results for those indicators should be interpreted with caution.
+With the extended sample, sentiment remains clearly stationary but unemployment is now borderline non-stationary (p = 0.106). All first-differenced series are stationary (p < 0.0001), making the differenced analysis below the appropriate specification.
 
 ### First-Differenced Analysis
 
 To address common trend bias, we re-run all correlations and Granger tests on first-differenced series (change in sentiment vs. change in indicator):
 
-| Indicator | Levels r | Differenced r (lag 0) | Granger (differenced) |
-|-----------|---------|----------------------|----------------------|
-| **Unemployment** | -0.59 | **-0.70** | Yes (lags 2--4) |
-| **CPI** | 0.05 | +0.22 | Yes (lags 2--3) |
-| **S&P 500** | -0.28 | -0.04 | No |
-| **GDP** | 0.15 | Insufficient obs. | Insufficient obs. |
+| Indicator | Differenced r (lag 0) | p-value | Granger (differenced) |
+|-----------|----------------------|---------|----------------------|
+| **Unemployment** | **-0.57** | < 0.0001 | Yes (lags 2--4) |
+| **CPI** | +0.19 | 0.004 | Yes (lag 2) |
+| **S&P 500** | -0.04 | 0.74 | No |
+| **GDP** | Insufficient obs. | -- | Insufficient obs. |
 
-The unemployment result **strengthens** after differencing (r = -0.70 vs. -0.59), confirming that changes in Beige Book tone predict changes in unemployment -- not merely a shared trend. CPI retains a weaker but significant signal. The S&P 500 correlation disappears entirely, confirming it was trend-driven.
+The unemployment result holds with 235 observations (r = -0.57, p < 0.0001) and Granger-causes at lags 2--4, confirming that changes in Beige Book tone predict changes in unemployment across three decades and three recessions. CPI retains a weaker but significant signal at lag 0. The S&P 500 correlation is effectively zero, confirming it was trend-driven.
 
 ### Exclude-COVID Out-of-Sample
 
@@ -251,9 +251,9 @@ We re-run the out-of-sample evaluation excluding the COVID period (March 2020 --
 
 | Indicator | Baseline RMSE | Sentiment RMSE | Improvement |
 |-----------|--------------|----------------|-------------|
-| **Unemployment** | 0.2104 | 0.2098 | +0.0006 |
-| **CPI** | 1.8707 | 1.7400 | +0.1307 |
-| **S&P 500** | 437.17 | 672.82 | -235.66 |
+| **Unemployment** | 0.2191 | 0.2162 | +0.0029 |
+| **CPI** | 1.7032 | 1.5553 | +0.1479 |
+| **S&P 500** | 437.17 | 670.41 | -233.25 |
 
 Both unemployment and CPI show improvement even after removing the COVID shock from the test set. The S&P 500 model degrades, consistent with no genuine predictive signal.
 
