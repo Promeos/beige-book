@@ -10,6 +10,10 @@ from src.hypothesis import (
     compute_lagged_correlations,
     run_granger_tests,
     compute_regional_correlations,
+    compute_sector_correlations,
+    compute_sector_district_correlations,
+    compute_sector_indicator_correlations,
+    run_sector_granger_tests,
 )
 
 
@@ -169,3 +173,55 @@ class TestComputeRegionalCorrelations:
         )
         result = compute_regional_correlations(df)
         assert len(result) == 0
+
+
+# ---------------------------------------------------------------------------
+# sector-level statistical tests
+# ---------------------------------------------------------------------------
+
+
+class TestSectorCorrelationFunctions:
+    def test_sector_correlations_return_expected_sectors(self, sample_sector_pipeline_inputs):
+        result = compute_sector_correlations(
+            sample_sector_pipeline_inputs["sector_df"],
+            sample_sector_pipeline_inputs["regional_df"],
+        )
+        assert set(result["sector"]) == {"Employment", "Manufacturing"}
+        assert result["correlation"].gt(0.9).all()
+
+    def test_sector_district_correlations_cover_each_pair(
+        self, sample_sector_pipeline_inputs
+    ):
+        result = compute_sector_district_correlations(
+            sample_sector_pipeline_inputs["sector_df"],
+            sample_sector_pipeline_inputs["regional_df"],
+        )
+        pairs = set(zip(result["sector"], result["district"]))
+        expected = {
+            ("Employment", "Boston"),
+            ("Employment", "New York"),
+            ("Manufacturing", "Boston"),
+            ("Manufacturing", "New York"),
+        }
+        assert pairs == expected
+        assert result["p_value"].between(0, 1).all()
+
+    def test_sector_indicator_correlations_include_requested_lags(
+        self, sample_sector_pipeline_inputs
+    ):
+        result = compute_sector_indicator_correlations(
+            sample_sector_pipeline_inputs["sector_merged_df"], max_lag=2
+        )
+        grouped = result.groupby("sector")["lag"].apply(list).to_dict()
+        assert grouped == {
+            "Employment": [0, 1, 2],
+            "Manufacturing": [0, 1, 2],
+        }
+
+    def test_sector_granger_tests_find_signal(self, sample_sector_pipeline_inputs):
+        result = run_sector_granger_tests(
+            sample_sector_pipeline_inputs["sector_merged_df"], max_lag=2
+        )
+        assert set(result) == {"Employment", "Manufacturing"}
+        assert result["Employment"][1]["significant"]
+        assert result["Manufacturing"][1]["significant"]
