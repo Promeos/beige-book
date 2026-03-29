@@ -49,6 +49,7 @@ def main():
         prep_beige_data,
         align_time_periods,
         compute_national_aggregate,
+        align_regional_data,
     )
 
     beige_df = prep_beige_data(beige_df)
@@ -72,6 +73,18 @@ def main():
     merged_df = align_time_periods(national_df, fred_df)
     logger.info("Merged dataset: %d rows", len(merged_df))
 
+    from src.acquire import get_regional_fred_data
+    from src.reporting import filter_date_range
+
+    regional_fred_df = get_regional_fred_data()
+    regional_merged_df = align_regional_data(beige_df, regional_fred_df)
+    regional_focus_df = filter_date_range(regional_merged_df, start="2011-01-01")
+    logger.info(
+        "Regional merged dataset: %d rows (%d rows in post-2011 focus sample)",
+        len(regional_merged_df),
+        len(regional_focus_df),
+    )
+
     # ---- Step 5: Explore ----
     logger.info("Step 5: Generating visualizations...")
 
@@ -79,10 +92,16 @@ def main():
         plot_sentiment_timeseries,
         plot_regional_comparison,
         plot_sentiment_vs_indicator,
+        plot_regional_sentiment_vs_economy,
+        plot_regional_correlation_bars,
+        plot_district_timeseries_grid,
     )
 
     plot_sentiment_timeseries(national_df)
     plot_regional_comparison(beige_df)
+    if not regional_focus_df.empty:
+        plot_regional_sentiment_vs_economy(regional_focus_df)
+        plot_district_timeseries_grid(regional_focus_df)
 
     indicator_labels = {
         "GDPC1": "Real GDP",
@@ -97,7 +116,11 @@ def main():
     # ---- Step 6: Statistical tests ----
     logger.info("Step 6: Running statistical tests...")
 
-    from src.hypothesis import compute_lagged_correlations, run_granger_tests
+    from src.hypothesis import (
+        compute_lagged_correlations,
+        run_granger_tests,
+        compute_regional_correlations,
+    )
 
     print("\n" + "=" * 60)
     print("LAGGED CORRELATIONS")
@@ -110,6 +133,14 @@ def main():
     print("GRANGER CAUSALITY TESTS")
     print("=" * 60)
     run_granger_tests(merged_df)
+
+    if not regional_focus_df.empty:
+        print("\n" + "=" * 60)
+        print("REGIONAL CORRELATIONS (POST-2011 SAMPLE)")
+        print("=" * 60)
+        regional_corr_df = compute_regional_correlations(regional_focus_df)
+        if not regional_corr_df.empty:
+            plot_regional_correlation_bars(regional_corr_df)
 
     # ---- Step 7: Predictive models ----
     logger.info("Step 7: Running predictive models...")
@@ -223,19 +254,37 @@ def main():
     run_all_robustness_checks(merged_df)
 
     # FDR correction on sector-district correlations (if regional data available)
-    if sector_csv.exists():
+    if sector_csv.exists() and not regional_merged_df.empty:
         from src.hypothesis import compute_sector_district_correlations
-        from src.acquire import get_regional_fred_data
-        from src.prepare import align_regional_data
 
-        regional_fred_df = get_regional_fred_data()
-        regional_merged = align_regional_data(beige_df, regional_fred_df)
-        if not regional_merged.empty:
-            sector_district_corr = compute_sector_district_correlations(
-                sector_df, regional_merged
-            )
-            if not sector_district_corr.empty:
-                run_sector_fdr_correction(sector_district_corr)
+        sector_district_corr = compute_sector_district_correlations(
+            sector_df, regional_merged_df
+        )
+        if not sector_district_corr.empty:
+            run_sector_fdr_correction(sector_district_corr)
+
+    if sector_csv.exists():
+        from src.config import OUTPUT_DIR
+        from src.reporting import build_analysis_artifact, write_analysis_artifact
+
+        artifact = build_analysis_artifact(
+            merged_df=merged_df,
+            regional_merged_df=regional_merged_df,
+            sector_df=sector_df,
+            sector_fred_df=sector_fred_df,
+            source_files={
+                "beige": str(DATA_DIR / "beige_book.csv"),
+                "fred": str(DATA_DIR / "fred_indicators.csv"),
+                "regional_fred": str(DATA_DIR / "fred_regional.csv"),
+                "sector": str(sector_csv),
+            },
+        )
+        artifact_paths = write_analysis_artifact(artifact, OUTPUT_DIR)
+        logger.info(
+            "Wrote canonical analysis summary to %s and %s",
+            artifact_paths["json"],
+            artifact_paths["markdown"],
+        )
 
     logger.info("Pipeline complete!")
 

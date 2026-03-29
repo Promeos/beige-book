@@ -51,6 +51,10 @@ Thumbs.db
 *.pkl
 *.pickle
 *.json
+!output/analysis_results.json
+
+# PDF files in repo root (reference papers, not project outputs)
+*.pdf
 
 # Model artifacts
 *.joblib

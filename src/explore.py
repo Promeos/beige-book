@@ -653,4 +653,5 @@ def _save_fig(fig, filename):
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     path = OUTPUT_DIR / filename
     fig.savefig(path, dpi=DPI, bbox_inches="tight")
+    plt.close(fig)
     print(f"Saved: {path}")

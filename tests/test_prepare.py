@@ -137,6 +137,29 @@ class TestAlignTimePeriods:
         result = align_time_periods(sample_beige_with_sentiment, sample_fred_df)
         assert len(result) == len(sample_beige_with_sentiment)
 
+    def test_aligns_to_next_non_null_indicator_release(self):
+        beige = pd.DataFrame(
+            {
+                "date": pd.to_datetime(["2023-03-08"]),
+                "sentiment_mean": [0.1],
+            }
+        )
+        fred = pd.DataFrame(
+            {
+                "date": pd.to_datetime(["2023-03-31", "2023-04-30"]),
+                "GDPC1": [None, 20150.0],
+                "UNRATE": [3.6, 3.5],
+            }
+        )
+
+        result = align_time_periods(beige, fred)
+
+        # GDP should skip the March row because the value is missing and map to
+        # the next actual release instead.
+        assert result.loc[0, "GDPC1"] == 20150.0
+        # Monthly series should still align to the immediate next observation.
+        assert result.loc[0, "UNRATE"] == 3.6
+
 
 # ---------------------------------------------------------------------------
 # compute_national_aggregate

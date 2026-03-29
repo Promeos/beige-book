@@ -59,6 +59,13 @@ from .maps import (
     plot_dominant_sector_map,
     plot_sector_map_animated,
 )
+from .reporting import (
+    filter_date_range,
+    build_analysis_artifact,
+    write_analysis_artifact,
+    render_markdown_summary,
+    summarize_split_sample_stability,
+)
 
 __all__ = [
     "get_beige_data",
@@ -104,4 +111,9 @@ __all__ = [
     "sector_out_of_sample_test",
     "build_sentence_sector_dataframe",
     "aggregate_sentence_sector_scores",
+    "filter_date_range",
+    "build_analysis_artifact",
+    "write_analysis_artifact",
+    "render_markdown_summary",
+    "summarize_split_sample_stability",
 ]

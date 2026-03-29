@@ -1,0 +1,1138 @@
+{
+  "generated_at": "2026-03-29T14:39:51.621835+00:00",
+  "method_notes": {
+    "national_alignment": "Each indicator is aligned independently to the next non-null release date via pandas.merge_asof(direction='forward').",
+    "regional_scope": "Regional results are reported for both the full available sample and the post-2011 subset used in the portfolio summary.",
+    "sector_scope": "The predictive sector panel uses data/sector_sentiment.csv; data/beige_book_sectors.csv remains a raw scraped corpus with heterogeneous section labels."
+  },
+  "source_files": {
+    "beige": "/Users/christopherortiz/Desktop/GitHub Repositories/beige-book/data/beige_book.csv",
+    "fred": "/Users/christopherortiz/Desktop/GitHub Repositories/beige-book/data/fred_indicators.csv",
+    "regional_fred": "/Users/christopherortiz/Desktop/GitHub Repositories/beige-book/data/fred_regional.csv",
+    "sector": "/Users/christopherortiz/Desktop/GitHub Repositories/beige-book/data/sector_sentiment.csv"
+  },
+  "national": {
+    "sample": {
+      "start_date": "1996-10-30",
+      "end_date": "2026-02-01",
+      "n_dates": 235
+    },
+    "indicators": {
+      "GDPC1": {
+        "lag0": {
+          "lag": 0,
+          "pearson_r": -0.20282819489670192,
+          "pearson_p": 0.001902542454691556,
+          "spearman_r": -0.32010213882239325,
+          "spearman_p": 6.325793639876788e-07
+        },
+        "best_absolute_correlation": {
+          "lag": 1,
+          "pearson_r": -0.20422380637153997,
+          "pearson_p": 0.001808240366879411,
+          "spearman_r": -0.3160656985586542,
+          "spearman_p": 9.389642788374894e-07
+        },
+        "granger": {
+          "n_obs": 232,
+          "lags": [
+            {
+              "lag": 1,
+              "f_stat": 9.224612413457352,
+              "p_value": 0.0026658221805710364,
+              "significant": true
+            },
+            {
+              "lag": 2,
+              "f_stat": 20.58909827329041,
+              "p_value": 6.146522648650021e-09,
+              "significant": true
+            },
+            {
+              "lag": 3,
+              "f_stat": 16.68462834457836,
+              "p_value": 8.237811728285927e-10,
+              "significant": true
+            },
+            {
+              "lag": 4,
+              "f_stat": 12.911523678559035,
+              "p_value": 1.8663341447801766e-09,
+              "significant": true
+            }
+          ],
+          "significant_lags": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "best_p_value": 8.237811728285927e-10
+        },
+        "controlled_ols": {
+          "n_obs": 231,
+          "sentiment_coef": -85.43514435458997,
+          "sentiment_p_value": 0.022528590174578422,
+          "rsquared": 0.9970588034470964
+        },
+        "out_of_sample": {
+          "train_n": 176,
+          "test_n": 55,
+          "baseline_rmse": 321.5670224888727,
+          "sentiment_rmse": 326.49487875969055,
+          "rmse_delta": -4.92785627081787
+        }
+      },
+      "UNRATE": {
+        "lag0": {
+          "lag": 0,
+          "pearson_r": -0.4462490836228251,
+          "pearson_p": 6.69164748247449e-13,
+          "spearman_r": -0.2463107408394584,
+          "spearman_p": 0.00013636170922746475
+        },
+        "best_absolute_correlation": {
+          "lag": 0,
+          "pearson_r": -0.4462490836228251,
+          "pearson_p": 6.69164748247449e-13,
+          "spearman_r": -0.2463107408394584,
+          "spearman_p": 0.00013636170922746475
+        },
+        "granger": {
+          "n_obs": 235,
+          "lags": [
+            {
+              "lag": 1,
+              "f_stat": 0.30268261308630673,
+              "p_value": 0.5827371092793692,
+              "significant": false
+            },
+            {
+              "lag": 2,
+              "f_stat": 0.5112848106365088,
+              "p_value": 0.6004105049867646,
+              "significant": false
+            },
+            {
+              "lag": 3,
+              "f_stat": 2.716276483939241,
+              "p_value": 0.0455502529630663,
+              "significant": true
+            },
+            {
+              "lag": 4,
+              "f_stat": 4.0047942797338925,
+              "p_value": 0.003708209001401653,
+              "significant": true
+            }
+          ],
+          "significant_lags": [
+            3,
+            4
+          ],
+          "best_p_value": 0.003708209001401653
+        },
+        "controlled_ols": {
+          "n_obs": 234,
+          "sentiment_coef": -1.0548052580525347,
+          "sentiment_p_value": 4.323481506731597e-11,
+          "rsquared": 0.871944305056749
+        },
+        "out_of_sample": {
+          "train_n": 176,
+          "test_n": 58,
+          "baseline_rmse": 1.4893370583555483,
+          "sentiment_rmse": 1.4384296768108347,
+          "rmse_delta": 0.05090738154471364
+        }
+      },
+      "CPIAUCSL": {
+        "lag0": {
+          "lag": 0,
+          "pearson_r": -0.28290700632013455,
+          "pearson_p": 1.0624315065518107e-05,
+          "spearman_r": -0.3670789922028815,
+          "spearman_p": 6.592585751753408e-09
+        },
+        "best_absolute_correlation": {
+          "lag": 0,
+          "pearson_r": -0.28290700632013455,
+          "pearson_p": 1.0624315065518107e-05,
+          "spearman_r": -0.3670789922028815,
+          "spearman_p": 6.592585751753408e-09
+        },
+        "granger": {
+          "n_obs": 235,
+          "lags": [
+            {
+              "lag": 1,
+              "f_stat": 6.877434829784383,
+              "p_value": 0.009309708928836478,
+              "significant": true
+            },
+            {
+              "lag": 2,
+              "f_stat": 1.7186268606100505,
+              "p_value": 0.18162686703617092,
+              "significant": false
+            },
+            {
+              "lag": 3,
+              "f_stat": 2.952881728450935,
+              "p_value": 0.0334373189793563,
+              "significant": true
+            },
+            {
+              "lag": 4,
+              "f_stat": 2.4255760441318275,
+              "p_value": 0.04895610426680481,
+              "significant": true
+            }
+          ],
+          "significant_lags": [
+            1,
+            3,
+            4
+          ],
+          "best_p_value": 0.009309708928836478
+        },
+        "controlled_ols": {
+          "n_obs": 234,
+          "sentiment_coef": 1.1448653571814074,
+          "sentiment_p_value": 1.6568903882785027e-07,
+          "rsquared": 0.999557176434616
+        },
+        "out_of_sample": {
+          "train_n": 176,
+          "test_n": 58,
+          "baseline_rmse": 1.5710254903172742,
+          "sentiment_rmse": 1.4213525454586027,
+          "rmse_delta": 0.14967294485867155
+        }
+      },
+      "SP500": {
+        "lag0": {
+          "lag": 0,
+          "pearson_r": -0.19139265355185467,
+          "pearson_p": 0.003222994353780208,
+          "spearman_r": -0.152170116288425,
+          "spearman_p": 0.019601318155379407
+        },
+        "best_absolute_correlation": {
+          "lag": 0,
+          "pearson_r": -0.19139265355185467,
+          "pearson_p": 0.003222994353780208,
+          "spearman_r": -0.152170116288425,
+          "spearman_p": 0.019601318155379407
+        },
+        "granger": {
+          "n_obs": 235,
+          "lags": [
+            {
+              "lag": 1,
+              "f_stat": 2.281416617724278,
+              "p_value": 0.13229890246123152,
+              "significant": false
+            },
+            {
+              "lag": 2,
+              "f_stat": 1.723515193849704,
+              "p_value": 0.18075432165990218,
+              "significant": false
+            },
+            {
+              "lag": 3,
+              "f_stat": 1.0513134200167111,
+              "p_value": 0.37068977856327334,
+              "significant": false
+            },
+            {
+              "lag": 4,
+              "f_stat": 1.2294111398982996,
+              "p_value": 0.2992182008867189,
+              "significant": false
+            }
+          ],
+          "significant_lags": [],
+          "best_p_value": 0.13229890246123152
+        },
+        "controlled_ols": {
+          "n_obs": 234,
+          "sentiment_coef": -48.08248569285472,
+          "sentiment_p_value": 0.06636862334350223,
+          "rsquared": 0.9894197704582127
+        },
+        "out_of_sample": {
+          "train_n": 176,
+          "test_n": 58,
+          "baseline_rmse": 249.67613634996457,
+          "sentiment_rmse": 249.72221636126088,
+          "rmse_delta": -0.04608001129631134
+        }
+      }
+    }
+  },
+  "regional": {
+    "full_available_sample": {
+      "sample": {
+        "start_date": "1996-10-30",
+        "end_date": "2025-11-01",
+        "n_dates": 233
+      },
+      "top_districts": [
+        {
+          "district": "Atlanta",
+          "correlation": 0.025285819714901875,
+          "p_value": 0.7010103931026983,
+          "n_obs": 233
+        },
+        {
+          "district": "Boston",
+          "correlation": 0.014796391576142051,
+          "p_value": 0.8222478821326719,
+          "n_obs": 233
+        },
+        {
+          "district": "Chicago",
+          "correlation": 0.0004446694859120493,
+          "p_value": 0.9946134575337949,
+          "n_obs": 233
+        },
+        {
+          "district": "New York",
+          "correlation": -0.04913882419308557,
+          "p_value": 0.45537223270262245,
+          "n_obs": 233
+        },
+        {
+          "district": "Kansas City",
+          "correlation": -0.06755381199292079,
+          "p_value": 0.30451845934865057,
+          "n_obs": 233
+        }
+      ],
+      "all_districts": [
+        {
+          "district": "Atlanta",
+          "correlation": 0.025285819714901875,
+          "p_value": 0.7010103931026983,
+          "n_obs": 233
+        },
+        {
+          "district": "Boston",
+          "correlation": 0.014796391576142051,
+          "p_value": 0.8222478821326719,
+          "n_obs": 233
+        },
+        {
+          "district": "Chicago",
+          "correlation": 0.0004446694859120493,
+          "p_value": 0.9946134575337949,
+          "n_obs": 233
+        },
+        {
+          "district": "New York",
+          "correlation": -0.04913882419308557,
+          "p_value": 0.45537223270262245,
+          "n_obs": 233
+        },
+        {
+          "district": "Kansas City",
+          "correlation": -0.06755381199292079,
+          "p_value": 0.30451845934865057,
+          "n_obs": 233
+        },
+        {
+          "district": "Cleveland",
+          "correlation": -0.07229768448441756,
+          "p_value": 0.2717331574611977,
+          "n_obs": 233
+        },
+        {
+          "district": "Dallas",
+          "correlation": -0.09570895038122176,
+          "p_value": 0.1452759667151695,
+          "n_obs": 233
+        },
+        {
+          "district": "St. Louis",
+          "correlation": -0.09934822805500731,
+          "p_value": 0.1305154744405947,
+          "n_obs": 233
+        },
+        {
+          "district": "San Francisco",
+          "correlation": -0.15872421350058882,
+          "p_value": 0.015300639526879307,
+          "n_obs": 233
+        },
+        {
+          "district": "Richmond",
+          "correlation": -0.17625550243175736,
+          "p_value": 0.006994588419156232,
+          "n_obs": 233
+        },
+        {
+          "district": "Philadelphia",
+          "correlation": -0.23343406134995598,
+          "p_value": 0.00032585143349541084,
+          "n_obs": 233
+        },
+        {
+          "district": "Minneapolis",
+          "correlation": -0.2760887455100423,
+          "p_value": 1.911098906091378e-05,
+          "n_obs": 233
+        }
+      ]
+    },
+    "post_2011_sample": {
+      "sample": {
+        "start_date": "2011-01-01",
+        "end_date": "2025-11-01",
+        "n_dates": 120
+      },
+      "top_districts": [
+        {
+          "district": "Cleveland",
+          "correlation": 0.663003676347482,
+          "p_value": 1.5909163158496253e-16,
+          "n_obs": 120
+        },
+        {
+          "district": "Boston",
+          "correlation": 0.3463341458370006,
+          "p_value": 0.00010670489259566235,
+          "n_obs": 120
+        },
+        {
+          "district": "St. Louis",
+          "correlation": 0.273913488973801,
+          "p_value": 0.0024676172313792565,
+          "n_obs": 120
+        },
+        {
+          "district": "San Francisco",
+          "correlation": 0.268925617077613,
+          "p_value": 0.0029778659112024678,
+          "n_obs": 120
+        },
+        {
+          "district": "New York",
+          "correlation": 0.20695334668481116,
+          "p_value": 0.023332698077448023,
+          "n_obs": 120
+        }
+      ],
+      "all_districts": [
+        {
+          "district": "Cleveland",
+          "correlation": 0.663003676347482,
+          "p_value": 1.5909163158496253e-16,
+          "n_obs": 120
+        },
+        {
+          "district": "Boston",
+          "correlation": 0.3463341458370006,
+          "p_value": 0.00010670489259566235,
+          "n_obs": 120
+        },
+        {
+          "district": "St. Louis",
+          "correlation": 0.273913488973801,
+          "p_value": 0.0024676172313792565,
+          "n_obs": 120
+        },
+        {
+          "district": "San Francisco",
+          "correlation": 0.268925617077613,
+          "p_value": 0.0029778659112024678,
+          "n_obs": 120
+        },
+        {
+          "district": "New York",
+          "correlation": 0.20695334668481116,
+          "p_value": 0.023332698077448023,
+          "n_obs": 120
+        },
+        {
+          "district": "Richmond",
+          "correlation": 0.17905873378087453,
+          "p_value": 0.05037046348650701,
+          "n_obs": 120
+        },
+        {
+          "district": "Dallas",
+          "correlation": 0.06007210895351962,
+          "p_value": 0.5145572210400793,
+          "n_obs": 120
+        },
+        {
+          "district": "Chicago",
+          "correlation": 0.05180444280726664,
+          "p_value": 0.5741658288277128,
+          "n_obs": 120
+        },
+        {
+          "district": "Philadelphia",
+          "correlation": 0.04760903271415315,
+          "p_value": 0.6055995373619761,
+          "n_obs": 120
+        },
+        {
+          "district": "Atlanta",
+          "correlation": 0.014388184991772777,
+          "p_value": 0.8760543088373821,
+          "n_obs": 120
+        },
+        {
+          "district": "Minneapolis",
+          "correlation": -0.0182331795366147,
+          "p_value": 0.8433108588152347,
+          "n_obs": 120
+        },
+        {
+          "district": "Kansas City",
+          "correlation": -0.033555744047237046,
+          "p_value": 0.7159776625234449,
+          "n_obs": 120
+        }
+      ]
+    }
+  },
+  "sector": {
+    "dataset": {
+      "source": "sector_sentiment.csv",
+      "description": "Summary-derived, sentence-classified sector panel used for predictive tests.",
+      "start_date": "2011-01-01",
+      "end_date": "2025-11-01",
+      "n_dates": 120,
+      "n_rows": 9422,
+      "n_sectors": 12
+    },
+    "indicator_correlations": {
+      "top_lag0": [
+        {
+          "sector": "Employment",
+          "indicator_id": "PAYEMS",
+          "lag": 0,
+          "pearson_r": 0.5123989263018489,
+          "pearson_p": 2.1976682343614397e-09,
+          "spearman_r": 0.4848461698729078,
+          "spearman_p": 2.0039217723962684e-08
+        },
+        {
+          "sector": "Manufacturing",
+          "indicator_id": "IPMAN",
+          "lag": 0,
+          "pearson_r": 0.3252681676609001,
+          "pearson_p": 0.0002890436917166898,
+          "spearman_r": 0.3369539551357733,
+          "spearman_p": 0.0001677703629215311
+        },
+        {
+          "sector": "Tourism & Hospitality",
+          "indicator_id": "USLAH",
+          "lag": 0,
+          "pearson_r": 0.29242817616808714,
+          "pearson_p": 0.0014456919499787582,
+          "spearman_r": 0.2343670432465871,
+          "spearman_p": 0.01133343016116662
+        },
+        {
+          "sector": "Prices",
+          "indicator_id": "CPIAUCSL",
+          "lag": 0,
+          "pearson_r": 0.22584666488190314,
+          "pearson_p": 0.013128488946274736,
+          "spearman_r": 0.2642627835099923,
+          "spearman_p": 0.003538831956131111
+        },
+        {
+          "sector": "Real Estate",
+          "indicator_id": "HOUST",
+          "lag": 0,
+          "pearson_r": 0.19163723731641732,
+          "pearson_p": 0.03601281616988013,
+          "spearman_r": 0.15636269562552457,
+          "spearman_p": 0.08811129329096015
+        },
+        {
+          "sector": "Agriculture",
+          "indicator_id": "WPU01",
+          "lag": 0,
+          "pearson_r": 0.18652407549621774,
+          "pearson_p": 0.07185211697016325,
+          "spearman_r": 0.206642801814528,
+          "spearman_p": 0.04568484695657614
+        },
+        {
+          "sector": "Construction",
+          "indicator_id": "TTLCONS",
+          "lag": 0,
+          "pearson_r": 0.025496233404564073,
+          "pearson_p": 0.8440592929510281,
+          "spearman_r": -0.011369228956000144,
+          "spearman_p": 0.9301132541793775
+        },
+        {
+          "sector": "Transportation",
+          "indicator_id": "TSIFRGHT",
+          "lag": 0,
+          "pearson_r": -0.022959671100438582,
+          "pearson_p": 0.823360766978753,
+          "spearman_r": -0.05593340998264205,
+          "spearman_p": 0.5863278856422962
+        },
+        {
+          "sector": "Financial Services",
+          "indicator_id": "BUSLOANS",
+          "lag": 0,
+          "pearson_r": -0.1093305135438728,
+          "pearson_p": 0.2622859334571029,
+          "spearman_r": -0.1382019637974878,
+          "spearman_p": 0.15572325959730793
+        },
+        {
+          "sector": "Consumer Spending",
+          "indicator_id": "RSAFS",
+          "lag": 0,
+          "pearson_r": -0.128101902763864,
+          "pearson_p": 0.16321197741259894,
+          "spearman_r": -0.061302868254739906,
+          "spearman_p": 0.5059633204343417
+        }
+      ],
+      "granger_significant": [
+        {
+          "sector": "Consumer Spending",
+          "indicator_id": "RSAFS",
+          "significant_lags": [
+            1,
+            2,
+            3
+          ],
+          "best_p_value": 0.00043079689066362136,
+          "n_obs": 120
+        },
+        {
+          "sector": "Manufacturing",
+          "indicator_id": "IPMAN",
+          "significant_lags": [
+            3
+          ],
+          "best_p_value": 0.04787688427887981,
+          "n_obs": 120
+        }
+      ]
+    },
+    "regional_correlations": {
+      "by_sector": [
+        {
+          "sector": "Tourism & Hospitality",
+          "correlation": 0.17896776030379585,
+          "p_value": 7.022273441154848e-05,
+          "n_obs": 488
+        },
+        {
+          "sector": "Employment",
+          "correlation": 0.16452191946175176,
+          "p_value": 1.2285112366173193e-07,
+          "n_obs": 1022
+        },
+        {
+          "sector": "Construction",
+          "correlation": 0.12333515950521141,
+          "p_value": 0.06358741101169796,
+          "n_obs": 227
+        },
+        {
+          "sector": "Agriculture",
+          "correlation": 0.1101677029653353,
+          "p_value": 0.004511625535169681,
+          "n_obs": 663
+        },
+        {
+          "sector": "Prices",
+          "correlation": 0.06505701056247405,
+          "p_value": 0.041008677360247846,
+          "n_obs": 987
+        },
+        {
+          "sector": "Manufacturing",
+          "correlation": 0.007807094470014895,
+          "p_value": 0.7958208988057413,
+          "n_obs": 1101
+        },
+        {
+          "sector": "Consumer Spending",
+          "correlation": -0.03334290632794682,
+          "p_value": 0.2571142286199484,
+          "n_obs": 1157
+        },
+        {
+          "sector": "General",
+          "correlation": -0.06362119131056879,
+          "p_value": 0.028794732274632202,
+          "n_obs": 1181
+        },
+        {
+          "sector": "Energy",
+          "correlation": -0.07340614053319125,
+          "p_value": 0.0977398534833518,
+          "n_obs": 510
+        },
+        {
+          "sector": "Transportation",
+          "correlation": -0.1311285552684902,
+          "p_value": 0.0036746188316023514,
+          "n_obs": 489
+        },
+        {
+          "sector": "Real Estate",
+          "correlation": -0.21105234551919394,
+          "p_value": 6.824572090010763e-10,
+          "n_obs": 838
+        },
+        {
+          "sector": "Financial Services",
+          "correlation": -0.2725181577103664,
+          "p_value": 2.1627079147977022e-14,
+          "n_obs": 759
+        }
+      ],
+      "sector_district_fdr": {
+        "n_tests": 136,
+        "n_raw_significant": 43,
+        "n_fdr_significant": 26,
+        "top_survivors": [
+          {
+            "sector": "Employment",
+            "district": "Cleveland",
+            "correlation": 0.6083167100994946,
+            "p_adjusted": 9.564846020483585e-11,
+            "n_obs": 114
+          },
+          {
+            "sector": "Manufacturing",
+            "district": "Boston",
+            "correlation": 0.5504448843159555,
+            "p_adjusted": 8.070534111436095e-06,
+            "n_obs": 78
+          },
+          {
+            "sector": "Employment",
+            "district": "San Francisco",
+            "correlation": 0.5464157775077653,
+            "p_adjusted": 5.159824850952019e-06,
+            "n_obs": 84
+          },
+          {
+            "sector": "Tourism & Hospitality",
+            "district": "New York",
+            "correlation": 0.4572796768091975,
+            "p_adjusted": 0.002876040682404754,
+            "n_obs": 61
+          },
+          {
+            "sector": "Tourism & Hospitality",
+            "district": "Cleveland",
+            "correlation": 0.4484005409569242,
+            "p_adjusted": 0.0055300517718505394,
+            "n_obs": 56
+          },
+          {
+            "sector": "Tourism & Hospitality",
+            "district": "Philadelphia",
+            "correlation": 0.44606250917981566,
+            "p_adjusted": 0.0055300517718505394,
+            "n_obs": 57
+          },
+          {
+            "sector": "Employment",
+            "district": "Boston",
+            "correlation": 0.43153018010792843,
+            "p_adjusted": 0.0010155064071185106,
+            "n_obs": 85
+          },
+          {
+            "sector": "Tourism & Hospitality",
+            "district": "Boston",
+            "correlation": 0.42814366347194655,
+            "p_adjusted": 0.0055300517718505394,
+            "n_obs": 62
+          },
+          {
+            "sector": "Manufacturing",
+            "district": "Philadelphia",
+            "correlation": 0.42141110981398666,
+            "p_adjusted": 0.0009767044241740686,
+            "n_obs": 92
+          },
+          {
+            "sector": "Manufacturing",
+            "district": "Cleveland",
+            "correlation": 0.3953474754021828,
+            "p_adjusted": 0.0025626458301270354,
+            "n_obs": 87
+          }
+        ]
+      }
+    }
+  },
+  "robustness": {
+    "adf": [
+      {
+        "series": "sentiment_mean",
+        "adf_stat": -4.387885986788954,
+        "p_value": 0.00031183345538452845,
+        "stationary": true,
+        "n_obs": 235
+      },
+      {
+        "series": "GDPC1",
+        "adf_stat": 0.2502699053965685,
+        "p_value": 0.9749442623033345,
+        "stationary": false,
+        "n_obs": 232
+      },
+      {
+        "series": "UNRATE",
+        "adf_stat": -2.543925478992117,
+        "p_value": 0.10514919047442145,
+        "stationary": false,
+        "n_obs": 235
+      },
+      {
+        "series": "CPIAUCSL",
+        "adf_stat": 2.363531767714572,
+        "p_value": 0.9989921008829951,
+        "stationary": false,
+        "n_obs": 235
+      },
+      {
+        "series": "SP500",
+        "adf_stat": 4.085943159599877,
+        "p_value": 1.0,
+        "stationary": false,
+        "n_obs": 235
+      }
+    ],
+    "differenced": {
+      "GDPC1": {
+        "lag0": {
+          "pearson_r": 0.058025732521491444,
+          "pearson_p": 0.3800139869371917
+        },
+        "granger": {
+          "n_obs": 231,
+          "lags": [
+            {
+              "lag": 1,
+              "f_stat": 40.63436237580031,
+              "p_value": 1.0131768253376829e-09,
+              "significant": true
+            },
+            {
+              "lag": 2,
+              "f_stat": 23.26520911696713,
+              "p_value": 6.600463190709451e-10,
+              "significant": true
+            },
+            {
+              "lag": 3,
+              "f_stat": 16.094183225645768,
+              "p_value": 1.6919657650391165e-09,
+              "significant": true
+            },
+            {
+              "lag": 4,
+              "f_stat": 13.631501358255989,
+              "p_value": 6.171411517918652e-10,
+              "significant": true
+            }
+          ],
+          "significant_lags": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "best_p_value": 6.171411517918652e-10
+        }
+      },
+      "UNRATE": {
+        "lag0": {
+          "pearson_r": -0.569364397414801,
+          "pearson_p": 1.6605916766145233e-21
+        },
+        "granger": {
+          "n_obs": 234,
+          "lags": [
+            {
+              "lag": 1,
+              "f_stat": 0.011395637174945836,
+              "p_value": 0.9150800901277926,
+              "significant": false
+            },
+            {
+              "lag": 2,
+              "f_stat": 3.0703689169466966,
+              "p_value": 0.0483362423393561,
+              "significant": true
+            },
+            {
+              "lag": 3,
+              "f_stat": 5.444581274492358,
+              "p_value": 0.0012458731169087422,
+              "significant": true
+            },
+            {
+              "lag": 4,
+              "f_stat": 4.722920818051661,
+              "p_value": 0.001123382406565806,
+              "significant": true
+            }
+          ],
+          "significant_lags": [
+            2,
+            3,
+            4
+          ],
+          "best_p_value": 0.001123382406565806
+        }
+      },
+      "CPIAUCSL": {
+        "lag0": {
+          "pearson_r": 0.1919395158611566,
+          "pearson_p": 0.003199978037652502
+        },
+        "granger": {
+          "n_obs": 234,
+          "lags": [
+            {
+              "lag": 1,
+              "f_stat": 0.654585887589266,
+              "p_value": 0.41931400600061586,
+              "significant": false
+            },
+            {
+              "lag": 2,
+              "f_stat": 3.330306083177947,
+              "p_value": 0.037538713757002976,
+              "significant": true
+            },
+            {
+              "lag": 3,
+              "f_stat": 2.1953027388416646,
+              "p_value": 0.08945078764720804,
+              "significant": false
+            },
+            {
+              "lag": 4,
+              "f_stat": 1.5172386968373128,
+              "p_value": 0.19809866377434748,
+              "significant": false
+            }
+          ],
+          "significant_lags": [
+            2
+          ],
+          "best_p_value": 0.037538713757002976
+        }
+      },
+      "SP500": {
+        "lag0": {
+          "pearson_r": -0.0288132603419554,
+          "pearson_p": 0.6610319109492884
+        },
+        "granger": {
+          "n_obs": 234,
+          "lags": [
+            {
+              "lag": 1,
+              "f_stat": 1.2292878303627024,
+              "p_value": 0.26870358333840927,
+              "significant": false
+            },
+            {
+              "lag": 2,
+              "f_stat": 0.8318836342438158,
+              "p_value": 0.43655109386492524,
+              "significant": false
+            },
+            {
+              "lag": 3,
+              "f_stat": 1.0862256318766819,
+              "p_value": 0.3557402043912126,
+              "significant": false
+            },
+            {
+              "lag": 4,
+              "f_stat": 0.8948861218083852,
+              "p_value": 0.467783074594188,
+              "significant": false
+            }
+          ],
+          "significant_lags": [],
+          "best_p_value": 0.26870358333840927
+        }
+      }
+    },
+    "exclude_covid_oos": {
+      "UNRATE": {
+        "train_n": 176,
+        "test_n": 38,
+        "baseline_rmse": 0.21573790488994637,
+        "sentiment_rmse": 0.21192899092073322,
+        "rmse_delta": 0.0038089139692131513
+      },
+      "CPIAUCSL": {
+        "train_n": 176,
+        "test_n": 38,
+        "baseline_rmse": 1.6732457740999502,
+        "sentiment_rmse": 1.5307500667654215,
+        "rmse_delta": 0.14249570733452877
+      },
+      "SP500": {
+        "train_n": 176,
+        "test_n": 38,
+        "baseline_rmse": 258.69110809185304,
+        "sentiment_rmse": 258.7428976355192,
+        "rmse_delta": -0.05178954366618882
+      }
+    },
+    "split_sample_unrate": {
+      "target": "UNRATE",
+      "split_date": "2011-01-01",
+      "periods": {
+        "pre_split": {
+          "n_obs": 112,
+          "diff_correlation": {
+            "pearson_r": -0.047419233433776325,
+            "pearson_p": 0.6195504355236162
+          },
+          "granger": {
+            "n_obs": 112,
+            "lags": [
+              {
+                "lag": 1,
+                "f_stat": 2.692601412171854,
+                "p_value": 0.10372431928779775,
+                "significant": false
+              },
+              {
+                "lag": 2,
+                "f_stat": 3.59474010017327,
+                "p_value": 0.030899472792359238,
+                "significant": true
+              },
+              {
+                "lag": 3,
+                "f_stat": 3.150421285537267,
+                "p_value": 0.02821403276836193,
+                "significant": true
+              },
+              {
+                "lag": 4,
+                "f_stat": 4.562343159253859,
+                "p_value": 0.002007766520748256,
+                "significant": true
+              }
+            ],
+            "significant_lags": [
+              2,
+              3,
+              4
+            ],
+            "best_p_value": 0.002007766520748256
+          }
+        },
+        "post_split": {
+          "n_obs": 122,
+          "diff_correlation": {
+            "pearson_r": -0.6937812395894322,
+            "pearson_p": 8.124800670550902e-19
+          },
+          "granger": {
+            "n_obs": 122,
+            "lags": [
+              {
+                "lag": 1,
+                "f_stat": 0.06860689513325843,
+                "p_value": 0.7938327236356559,
+                "significant": false
+              },
+              {
+                "lag": 2,
+                "f_stat": 3.6130137222434597,
+                "p_value": 0.030075528072774034,
+                "significant": true
+              },
+              {
+                "lag": 3,
+                "f_stat": 6.182376840028457,
+                "p_value": 0.0006314702080952562,
+                "significant": true
+              },
+              {
+                "lag": 4,
+                "f_stat": 6.392193270288789,
+                "p_value": 0.00011680952509888214,
+                "significant": true
+              }
+            ],
+            "significant_lags": [
+              2,
+              3,
+              4
+            ],
+            "best_p_value": 0.00011680952509888214
+          }
+        },
+        "full_sample": {
+          "n_obs": 234,
+          "diff_correlation": {
+            "pearson_r": -0.569364397414801,
+            "pearson_p": 1.6605916766145233e-21
+          },
+          "granger": {
+            "n_obs": 234,
+            "lags": [
+              {
+                "lag": 1,
+                "f_stat": 0.011395637174945836,
+                "p_value": 0.9150800901277926,
+                "significant": false
+              },
+              {
+                "lag": 2,
+                "f_stat": 3.0703689169466966,
+                "p_value": 0.0483362423393561,
+                "significant": true
+              },
+              {
+                "lag": 3,
+                "f_stat": 5.444581274492358,
+                "p_value": 0.0012458731169087422,
+                "significant": true
+              },
+              {
+                "lag": 4,
+                "f_stat": 4.722920818051661,
+                "p_value": 0.001123382406565806,
+                "significant": true
+              }
+            ],
+            "significant_lags": [
+              2,
+              3,
+              4
+            ],
+            "best_p_value": 0.001123382406565806
+          }
+        }
+      }
+    }
+  }
+}

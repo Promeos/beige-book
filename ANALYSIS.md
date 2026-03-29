@@ -1,6 +1,8 @@
 # Regional Sector Analysis
 
-A deep dive into how economic sentiment varies by sector and Federal Reserve district, based on 9,422 sector-level observations extracted from 1,440 Beige Book summaries (2011-2025).
+Interpretive notes for the canonical sector panel in `data/sector_sentiment.csv`.
+
+This document is a qualitative deep dive built on 9,422 summary-derived sector observations from 1,440 district summaries across 120 Beige Book dates (`2011-01-01` through `2025-11-01`). For the exact reproducible coefficients, p-values, sample windows, and FDR counts used elsewhere in the repo, use `output/analysis_results.json` and `output/analysis_results.md`.
 
 ## Methodology
 

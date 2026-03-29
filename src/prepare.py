@@ -100,17 +100,30 @@ def align_time_periods(beige_df, fred_df):
     fred_df["date"] = pd.to_datetime(fred_df["date"])
 
     # Sort both by date for merge_asof
-    beige_df = beige_df.sort_values("date")
-    fred_df = fred_df.sort_values("date")
+    beige_df = beige_df.sort_values("date").reset_index(drop=True)
+    fred_df = fred_df.sort_values("date").reset_index(drop=True)
 
-    # Forward merge: each Beige Book date gets the NEXT indicator reading
-    merged = pd.merge_asof(
-        beige_df,
-        fred_df,
-        on="date",
-        direction="forward",
-        suffixes=("", "_indicator"),
-    )
+    merged = beige_df.copy()
+
+    # Align each indicator to its own non-null release calendar.
+    # A single wide merge can map Beige Book dates to a row where one
+    # indicator is present but another is missing (for example quarterly GDP
+    # on monthly FRED rows), which breaks the "next available observation"
+    # logic described in the README.
+    indicator_cols = [col for col in fred_df.columns if col != "date"]
+    for col in indicator_cols:
+        indicator = fred_df[["date", col]].dropna().sort_values("date")
+        if indicator.empty:
+            merged[col] = pd.NA
+            continue
+
+        aligned = pd.merge_asof(
+            beige_df[["date"]].sort_values("date"),
+            indicator,
+            on="date",
+            direction="forward",
+        )
+        merged[col] = aligned[col].values
 
     return merged
 
