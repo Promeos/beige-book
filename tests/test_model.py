@@ -11,6 +11,8 @@ from src.model import (
     run_all_regressions,
     out_of_sample_test,
     _directional_accuracy,
+    run_sector_regressions,
+    sector_out_of_sample_test,
 )
 
 
@@ -147,3 +149,48 @@ class TestDirectionalAccuracy:
         predicted = np.random.randn(50)
         result = _directional_accuracy(actual, predicted)
         assert 0.0 <= result <= 1.0
+
+
+# ---------------------------------------------------------------------------
+# sector-level regression tests
+# ---------------------------------------------------------------------------
+
+
+class TestSectorRegressions:
+    def test_returns_models_for_each_sector(self, sample_sector_pipeline_inputs):
+        result = run_sector_regressions(sample_sector_pipeline_inputs["sector_merged_df"])
+        assert set(result) == {"Employment", "Manufacturing"}
+        assert result["Employment"]["controlled"] is not None
+        assert result["Manufacturing"]["controlled"] is not None
+
+    def test_controlled_models_retain_positive_sentiment_signal(
+        self, sample_sector_pipeline_inputs
+    ):
+        result = run_sector_regressions(sample_sector_pipeline_inputs["sector_merged_df"])
+        assert result["Employment"]["controlled"].params["sentiment_mean"] > 0
+        assert result["Manufacturing"]["controlled"].params["sentiment_mean"] > 0
+
+
+class TestSectorOutOfSample:
+    def test_returns_metrics_for_each_sector(self, sample_sector_pipeline_inputs):
+        result = sector_out_of_sample_test(
+            sample_sector_pipeline_inputs["sector_merged_df"],
+            train_end="2018-12-31",
+        )
+        assert set(result) == {"Employment", "Manufacturing"}
+        assert "rmse" in result["Employment"]["baseline"]
+        assert "rmse" in result["Employment"]["sentiment_model"]
+
+    def test_sentiment_model_improves_rmse(self, sample_sector_pipeline_inputs):
+        result = sector_out_of_sample_test(
+            sample_sector_pipeline_inputs["sector_merged_df"],
+            train_end="2018-12-31",
+        )
+        assert (
+            result["Employment"]["sentiment_model"]["rmse"]
+            < result["Employment"]["baseline"]["rmse"]
+        )
+        assert (
+            result["Manufacturing"]["sentiment_model"]["rmse"]
+            < result["Manufacturing"]["baseline"]["rmse"]
+        )

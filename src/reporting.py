@@ -351,6 +351,23 @@ def render_markdown_summary(results):
     """
     Render a concise Markdown summary from the canonical results artifact.
     """
+    regional = results["regional"]
+    robustness = results["robustness"]
+    full_top = _fmt_top_district(regional["full_available_sample"].get("top_districts"))
+    post_top = _fmt_top_district(regional["post_2011_sample"].get("top_districts"))
+    exclude_covid_delta = (
+        robustness.get("exclude_covid_oos", {})
+        .get("UNRATE", {})
+        .get("rmse_delta")
+    )
+    split_post_r = (
+        robustness.get("split_sample_unrate", {})
+        .get("periods", {})
+        .get("post_split", {})
+        .get("diff_correlation", {})
+        .get("pearson_r")
+    )
+
     lines = [
         "# Analysis Results",
         "",
@@ -385,18 +402,13 @@ def render_markdown_summary(results):
             f"{_fmt_optional(controlled_p, '.4f')} | {_fmt_optional(oos_delta, '.4f')} |"
         )
 
-    regional = results["regional"]
     lines.extend(
         [
             "",
             "## Regional",
             "",
-            f"- Full available sample top district: "
-            f"{regional['full_available_sample']['top_districts'][0]['district']} "
-            f"({regional['full_available_sample']['top_districts'][0]['correlation']:.3f})",
-            f"- Post-2011 top district: "
-            f"{regional['post_2011_sample']['top_districts'][0]['district']} "
-            f"({regional['post_2011_sample']['top_districts'][0]['correlation']:.3f})",
+            f"- Full available sample top district: {full_top}",
+            f"- Post-2011 top district: {post_top}",
             "",
             "## Sector",
             "",
@@ -420,16 +432,15 @@ def render_markdown_summary(results):
             f"{row['pearson_p']:.4f} |"
         )
 
-    robustness = results["robustness"]
     lines.extend(
         [
             "",
             "## Robustness",
             "",
             f"- Exclude-COVID UNRATE RMSE delta: "
-            f"{robustness['exclude_covid_oos']['UNRATE']['rmse_delta']:.4f}",
+            f"{_fmt_optional(exclude_covid_delta, '.4f')}",
             f"- Split-sample UNRATE post-2011 differenced r: "
-            f"{robustness['split_sample_unrate']['periods']['post_split']['diff_correlation']['pearson_r']:.3f}",
+            f"{_fmt_optional(split_post_r, '.3f')}",
             "",
         ]
     )
@@ -475,6 +486,18 @@ def _fmt_optional(value, fmt):
     if value is None:
         return "--"
     return format(value, fmt)
+
+
+def _fmt_top_district(records):
+    if not records:
+        return "--"
+
+    top = records[0]
+    district = top.get("district", "--")
+    correlation = top.get("correlation")
+    if correlation is None:
+        return district
+    return f"{district} ({correlation:.3f})"
 
 
 def _run_granger_summary(df, indicator, max_lag=4):

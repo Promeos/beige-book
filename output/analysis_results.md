@@ -5,7 +5,7 @@ source for published summary numbers in this repository.
 
 ## National
 
-- Sample: 1996-10-30 to 2026-02-01 (235 report dates)
+- Sample: 1996-10-30 to 2026-04-01 (236 report dates)
 - Lag-0 correlations, Granger significance, controlled OLS p-values, and out-of-sample RMSE deltas:
 
 | Indicator | Lag-0 r | Lag-0 p | Granger Lags | Controlled p | OOS RMSE Delta |
